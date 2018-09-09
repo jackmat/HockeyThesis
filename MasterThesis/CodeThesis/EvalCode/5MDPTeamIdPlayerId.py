@@ -22,6 +22,16 @@ START_YEAR = 2007020001
 
 
 def main():
+    # =============================================================================
+    #     ### Description:   (1) Opens MySQLdb connection
+    #                        (2) Select different GameId from SQL Database
+    #                        (3) For each distinct gameId in the table: 
+    #                               Get TeamId per match
+    #                               Get PlayerId per match and event in the match if registered
+    #     ### Args:
+    #    ###Return:
+    # =============================================================================
+
     db_connection = MySQLdb.connect(host = '127.0.0.1',
                                     port = 3306, 
                                     db='nhl', 
@@ -48,6 +58,21 @@ def main():
    
     
 def get_table_info(event_type, teamvar):
+    # =============================================================================
+    #     ### Description:   It outputs a value for variables 
+    #                       team_id, table_name, external_id_name, PlayerId_col
+    #     ### Args:
+    #     #     event_type: if event_type exists: it will give different outputs for the varaibles
+    #                       else it will output them as empty ''
+    #     #     teamvar: characther variable being either 'Away' or 'Home'
+    #                       It only is required to be given if event_type ='FACEOFF'
+    #                    
+    #    ###Return:
+    #     #     It outputs a value for variables 
+    #         team_id, table_name, external_id_name, PlayerId_col    
+    #                     
+    # =============================================================================
+
     team_id = ""
     table_name = ""
     external_id_name = "" 
@@ -112,7 +137,17 @@ def GetPlayerIds(IdMatch, d,  c):
 #     pr = cProfile.Profile()
 #     pr.enable()  # 
 # =============================================================================
-    
+    # =============================================================================
+    #     ### Description:   it gets players Id per events to the specified match
+    #     ### Args:
+    #     #     IdMatch: integer value referred to a match
+    #     #     c: cursor
+    #     #     d: db_connection
+    #                    
+    #    ###Return:
+    #     #         #                     
+    # =============================================================================
+
     query = """SELECT GameId, EventNumber, EventType, Team FROM q_fulltable   
 			WHERE GameId = {0} and (EventType IN {1} or EventType IN {2})
 			ORDER BY EventNumber ASC
@@ -182,7 +217,17 @@ def GetPlayerIds(IdMatch, d,  c):
 
 
 def GetTeamId(IdMatch, d,c): 
-    
+    # =============================================================================
+    #     ### Description:   it gets Teams Id per match
+    #     ### Args:
+    #     #     IdMatch: integer value referred to a match
+    #     #     c: cursor
+    #     #     d: db_connection
+    #                    
+    #    ###Return:
+    #     #         #                     
+    # =============================================================================
+
     query = """SELECT TeamId, GameId, Venue FROM `plays_in` WHERE GameId = {0} """.format(IdMatch)
     c.execute(query)
     result = c.fetchall()

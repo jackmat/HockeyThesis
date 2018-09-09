@@ -20,6 +20,22 @@ end_events = ["stoppage", "goal", "shootout completed", "penalty", "early interm
 START_YEAR = 2007020001
 
 def main():
+    # =============================================================================
+    #     ### Description:   (1) It initiates Graphwriter()
+    #                               It is object that writes the ad-tree state_graph_2 SQL server file
+    #
+    #                        (2) it passes the Graphwriter object to the ADtree file
+    #                               it is an object that creates the tree according to AD-tree rules
+    
+    #                        (3) Initiates normal connection to nhl database
+    #                        (4) For each distinct GameId
+    #                            Create and Adtree using add_events_to_tree
+    #     ### Args:
+    #    ###Return:
+    #     #     Variables Prob_next_home_goal and Prob_next_away_goal created
+    #                     
+    # =============================================================================
+    
     graph_writer = GraphWriter()
     tree = ADTree(graph_writer)
     nhl_db = MySQLdb.connect(
@@ -43,6 +59,13 @@ def main():
     graph_writer.close_db()
 
 def game_winner(game_id, db, c):
+    # =============================================================================
+    #     ### Description:   Not necessary to understand. Not really used
+    #    ###Return:
+    #     #     It returns home or away saying who won a particular match
+    #                     
+    # =============================================================================
+
     query = """SELECT Result FROM `Plays_In`
 			WHERE GameId = {0} AND Venue = 'Home'
             """.format(game_id)
@@ -56,6 +79,20 @@ def game_winner(game_id, db, c):
         return ""
 
 def get_num_players(result, home, db, c):
+    # =============================================================================
+    #     ### Description:   Calculates Manpower Differential between teams
+    #     ### Args:
+    #     #     seasonyear: integer value. Only 2007-2014 years are accepted
+    #     #     Matzero: if True, np.zeroMatrix is created, else, np.ones(matrix)
+    #     #     c: cursor
+    #     #     d: db_connection
+    #                    
+    #    ###Return:
+    #     #     It returns manpower differential for a match and event.
+    #           If n>0, then Home Team has n more players than Away team
+    #           If n<0, then Home Team has n less players than Away team
+    #           If n= 0, then Home and Away Team has = players 
+    # =============================================================================
     count = 0
     query = "SELECT COUNT(*) AS NumSkaters FROM Skater WHERE "
     num_players = 0
@@ -81,6 +118,21 @@ def get_num_players(result, home, db, c):
     return count
 
 def get_table_info(event_type):
+    # =============================================================================
+    #     ### Description:   It outputs a value for variables 
+    #                       team_id, table_name, external_id_name, 
+    #     ### Args:
+    #     #     event_type: if event_type exists: it will give different outputs for the varaibles
+    #                       else it will output them as empty ''
+    #     #     teamvar: characther variable being either 'Away' or 'Home'
+    #                       It only is required to be given if event_type ='FACEOFF'
+    #                    
+    #    ###Return:
+    #     #     It outputs a value for variables 
+    #         team_id, table_name, external_id_name
+    #       which are used to look into different data_tables in the sql server
+    #                     
+    # =============================================================================
     team_id = ""
     table_name = ""
     external_id_name = "" 
@@ -123,9 +175,34 @@ def get_table_info(event_type):
     return team_id, table_name, external_id_name
 
 def add_events_to_tree(game_id, tree, db, c):
-    pr = cProfile.Profile()
-    pr.enable()  # 
-    print("Processing Game: {0}".format(game_id))
+# =============================================================================
+#     pr = cProfile.Profile()
+#     pr.enable()  # 
+#     print("Processing Game: {0}".format(game_id))
+# =============================================================================
+    # =============================================================================
+    #     ### Description:   (1) It select a GameId with all action and start/end events
+    #                        (2) For each game Id: 
+    #                             Calculates Manpower Differential = md = nr_of_home_skaters - nr_of_away_skaters
+    #                             Takes variables: 
+    #                               event_type, event_id, game_id , event_nr,
+    #                               period, event_time, player_id= 0 (calculated in file 5)
+    #                               Zone, team a(Z,T) and 
+    #                               GoalDifferential = gd; 
+    #                                   (if gd> 0 Home has Goal Advantage, if gd = 0 is draw, else it is losing)
+    
+    #                         (3) It passes all of this to tree object with function addevent()
+    #     ### Args:
+    #     #     game_id: integer referring to a matchid
+    #     #     tree: object with an inner Graphwriter object
+    #     #     c: cursor
+    #     #     db: db_connection
+    #                    
+    #    ###Return:
+    #     #  
+    #                     
+    # =============================================================================
+
     query = """SELECT * FROM `play_by_play_eventsfiltered`   
 			WHERE GameId = {0} and (EventType IN {1} or EventType IN {2})
 			ORDER BY EventNumber ASC
@@ -176,12 +253,14 @@ def add_events_to_tree(game_id, tree, db, c):
     #Game is over
     winner = game_winner(game_id, db, c)
     tree.add_winner_event(winner, gd)
-    pr.disable()  # end profiling
-    s = StringIO.StringIO()
-    sortby = 'cumulative'
-    ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
-    ps.print_stats()
-    print(s.getvalue())
+# =============================================================================
+#     pr.disable()  # end profiling
+#     s = StringIO.StringIO()
+#     sortby = 'cumulative'
+#     ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+#     ps.print_stats()
+#     print(s.getvalue())
+# =============================================================================
 
 
 if __name__ == "__main__":

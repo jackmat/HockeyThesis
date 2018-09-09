@@ -11,6 +11,19 @@ path = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
 
 
 def main():
+    # =============================================================================
+    #     ### Description:   (1) Opens MySQLdb connection
+    #                        (2) It reads a q_table in a specified path create by MDP value_iteration
+    #                               it puts name to its colums
+    #                        (3) It merges online play_by_play_events with the MDP file
+    #                        (4) It creates a Table Called q_fulltable in the server with all Data
+    #                            Variables Prob_next_home_goal and Prob_next_away_goal created
+    #     ### Args:
+    #    ###Return:
+    #     #     Variables Prob_next_home_goal and Prob_next_away_goal created
+    #                     
+    # =============================================================================
+
     state_graph_db = MySQLdb.connect(host = '127.0.0.1',
                                         port = 3306,
                                     user="root", 
@@ -21,7 +34,7 @@ def main():
     qtable= pd.read_csv(path+"q_table.csv")
     
     ## Establishing column names
-    qtable.columns = ["GeneralIndex", "NodeId", "expected_goals", "probability_next_home_goal", "probability_next_away_goal"]
+    qtable.columns = ["NodeId","GeneralIndex", "expected_goals", "probability_next_home_goal", "probability_next_away_goal"]
     ## Writing table iteration
     Node_info= pd.read_sql_query("SELECT * FROM node_info", state_graph_db )
     ## Passing it to Node_info which stores the reference to each NodeId being current
@@ -69,8 +82,17 @@ def main():
         EventNumber = row[1]
         NodeId= row[2]
         expected_goals = row[3]
-        probability_next_home_goal = row[4]
-        probability_next_away_goal = row[5]
+        if float(row[4])>0:
+            if float(row[5])>0:
+                probability_next_home_goal =  str(float(row[4])/(float(row[4])+float(row[5])))
+        else:
+            probability_next_home_goal = str(0)
+        if float(row[5])>0:
+            if float(row[4])>0:
+                probability_next_away_goal = str(float(row[5])/(float(row[4])+float(row[5])))
+        else:
+            probability_next_away_goal = str(0)
+            
         EventType_y= row[6]
         GD= row[7]
         MD = row[8]
@@ -81,11 +103,11 @@ def main():
                     ", ExpGoals = ",expected_goals, 
                     ", Prob_next_home_goal = ", probability_next_home_goal,
                     ", Prob_next_away_goal = ", probability_next_away_goal,
-                    ", Event = '", EventType_y,"'",
-                    ", GD = ", GD, 
-                    ", MD = ", MD,
-                    ", Zone = '", Zone,"'",    
-                    ", Team = '", Team,"'",     
+ #                   ", Event = '", EventType_y,"'",
+ #                   ", GD = ", GD, 
+ #                   ", MD = ", MD,
+ #                   ", Zone = '", Zone,"'",    
+ #                   ", Team = '", Team,"'",     
                 " WHERE GameId = " ,GameId,
                 " AND EventNumber = ",EventNumber]) 
         cursor.execute(query)
@@ -98,6 +120,7 @@ def main():
     nhl.commit()        
     print("Dataset filled")
 def TableCreation():
+    
     nhl= MySQLdb.connect(host = '127.0.0.1',
                                     port = 3306,
                                     user="root", 
