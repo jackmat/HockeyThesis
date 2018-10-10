@@ -2,17 +2,16 @@ from __future__ import print_function
 import sys
 import MySQLdb
 import time
-import sys
 path = "C:\Users\Carles\Desktop\MasterThesis\CodeThesis\EvalCode"
 sys.path.append(path)
 
 
 
-
+from ad_node import ADNode
 from ad_tree import ADTree
 from graph_writer import GraphWriter
 from db_functions import fetch_all_from_db
-import cProfile, pstats, StringIO
+#import cProfile, pstats, StringIO
 
 ACTION_EVENTS = "('FACEOFF', 'SHOT', 'MISSED SHOT', 'BLOCKED SHOT', 'TAKEAWAY', 'GIVEAWAY', 'HIT', 'GOAL', 'PENALTY')"
 START_END_EVENTS = "('PERIOD START', 'PERIOD END', 'EARLY INTERMISSION START', 'STOPPAGE', 'SHOOTOUT COMPLETED', 'GAME END', 'GAME OFF', 'EARLY INTERMISSION END')"
@@ -43,7 +42,7 @@ def main():
         port = 3306,
          user="root", passwd="", db="nhl")
     cursor = nhl_db.cursor()
-    query = """SELECT DISTINCT GameId FROM play_by_play_eventsfiltered 
+    query = """SELECT DISTINCT GameId FROM Play_By_Play_Events 
             WHERE GameId >= {0}""".format(START_YEAR)
     results = fetch_all_from_db(nhl_db, cursor, query)
     nr_of_games = 0
@@ -203,7 +202,7 @@ def add_events_to_tree(game_id, tree, db, c):
     #                     
     # =============================================================================
 
-    query = """SELECT * FROM `play_by_play_eventsfiltered`   
+    query = """SELECT * FROM `Play_By_Play_Events`   
 			WHERE GameId = {0} and (EventType IN {1} or EventType IN {2})
 			ORDER BY EventNumber ASC
 			""".format(game_id, ACTION_EVENTS, START_END_EVENTS)

@@ -82,17 +82,21 @@ def main():
         EventNumber = row[1]
         NodeId= row[2]
         expected_goals = row[3]
-        if float(row[4])>0:
-            if float(row[5])>0:
-                probability_next_home_goal =  str(float(row[4])/(float(row[4])+float(row[5])))
-        else:
-            probability_next_home_goal = str(0)
-        if float(row[5])>0:
-            if float(row[4])>0:
-                probability_next_away_goal = str(float(row[5])/(float(row[4])+float(row[5])))
-        else:
-            probability_next_away_goal = str(0)
-            
+        probability_next_home_goal =row[4]
+        probability_next_away_goal = row[5]
+# =============================================================================
+#         if float(row[4])>0:
+#             if float(row[5])>0:
+#                 probability_next_home_goal =  str(float(row[4])/(float(row[4])+float(row[5])))
+#         else:
+#             probability_next_home_goal = str(0)
+#         if float(row[5])>0:
+#             if float(row[4])>0:
+#                 probability_next_away_goal = str(float(row[5])/(float(row[4])+float(row[5])))
+#         else:
+#             probability_next_away_goal = str(0)
+#             
+# =============================================================================
         EventType_y= row[6]
         GD= row[7]
         MD = row[8]

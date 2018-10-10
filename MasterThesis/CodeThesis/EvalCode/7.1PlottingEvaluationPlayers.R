@@ -26,6 +26,7 @@ SalariesCalc <- FALSE # Changing to True when scrapped Data is on the varible Sa
 loadpath<-"C:/Users/Carles/Desktop/MasterThesis/CodeThesis/CleanDatasets/" 
 RegularMatches<-82
 path = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
+FilepathSrotingPlots<- "C:/Users/Carles/Desktop/MasterThesis/ResultsPhotos/"
 
 ## Loading Datasets
 CDataset<-read.csv(paste0(loadpath, Season, "CDataset.csv"),check.names=FALSE)
@@ -38,6 +39,7 @@ TimeDataset<-TimeDataset[,2:length(TimeDataset)]
 PlusMinusTimeDataset<-PlusMinusTimeDataset[,2:length(PlusMinusTimeDataset)]
 PMDataset<-PMDataset[,2:length(PMDataset)]
 SecTimeDataset<-SecTimeDataset[,2:length(SecTimeDataset)]
+
 
 TopCols <- function(Data, topn=3){
   ### It extracts top n players by higher valuation
@@ -87,8 +89,6 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
   colnames(uData)<-c("5%", "25%", "50%","75%", "95%", "counter", "Dat")
   return(uData)
 }
-
-
   ##################################General Evaluation of the Data ############
   myData_melted <- melt(CDataset, id.vars = 'CountGame')
   myTime_melted<- melt(TimeDataset, id.vars = 'CountGame')
@@ -98,11 +98,11 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
   # Eliminating from evaluation values exactly 0, which means probably that the player has not played
   if(Boolean == TRUE){
     Boolean <- FALSE
-    myData_melted<-myData_melted[ !myData_melted$value==0,] 
+    myData_melted<-myData_melted[ !myTime_melted$value==0,] 
+    myPlusMinus_melted<-myPlusMinus_melted[ !myTime_melted$value==0,] 
+    PlusMinusTime_melted<-PlusMinusTime_melted[ !myTime_melted$value==0,]
     myTime_melted<-myTime_melted[ !myTime_melted$value==0,]
-    myPlusMinus_melted<-myPlusMinus_melted[ !myPlusMinus_melted$value==0,] 
-    PlusMinusTime_melted<-PlusMinusTime_melted[ !PlusMinusTime_melted$value==0,]
-  }
+    }
   #Adding Variable to know which measure they are
   Valmelted<-cbind(myData_melted, Dat="Val")
   Valtimemelted<-cbind(myTime_melted, Dat="Val/h")
@@ -124,10 +124,12 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
     geom_histogram(aes(x = value, 
                        y=(..count..)/tapply(..count..,..PANEL..,sum)[..PANEL..], 
                        fill = (..count..)/tapply(..count..,..PANEL..,sum)[..PANEL..]),
-                   bins = 20, stat= "bin")+
+                   bins = 20, stat= "bin"
+                   )+
     xlim(c(quantiles[1],quantiles[2])) 
-  boxplot1<-ggplot(Datasetdiff0, aes(x ="", y=value))+ 
-    facet_grid(.~Dat)+ coord_cartesian(ylim = c(-3, 4))+
+  
+  boxplot1 <-ggplot(Datasetdiff0, aes(x ="", y=value))+ 
+    facet_grid(.~Dat)+ coord_cartesian(ylim = c(-10, 7))+
     labs(subtitle=paste0("Box plot distritbution (Outliers not shown)"), 
            y="Valuation range", 
            x="", 
@@ -252,7 +254,6 @@ scatterplot891011<-function(Data, Season, scaled ="Scaled", type = "by Games Pla
   return(p)
 }
 
-colnames(GeneralTable)
 ind<-c(8:19)
 normtableres<-data.frame(cbind(Salary =GeneralTable$Salary, apply(GeneralTable[,ind],2,scale)))
 norm_tableresData <- reshape2::melt(normtableres, id.vars = "Salary")
@@ -305,7 +306,6 @@ NamePlots<- c(paste0(Season,NameVar," Box summary of players Evaluation for all 
             paste0(Season,NameVar,  " Scaled separated regression Total metrics to Salary all players in ", Season),
             paste0(Season,NameVar,  " GeneralTableWithMetrics"))  
               # Can I say it has a higher impact than the other measures on salary ?
-FilepathSrotingPlots<- "C:/Users/Carles/Desktop/MasterThesis/ResultsPhotos/"
 
 for( i in 1:length(listPlots)){
   totname<-paste0(FilepathSrotingPlots,NamePlots[i],'.png')

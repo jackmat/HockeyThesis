@@ -237,19 +237,19 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
                 PrevTime = datetime.timedelta(0,0)
                 CurrentTime = datetime.timedelta(0,0)
 #                    print(PrevTime)
-                if PlayersPlayed != []:    
-                    DiffTime = (CurrentTime-PrevTime).total_seconds()
-                    if (CurEventType =='FACEOFF' and PrevEventType == 'PERIOD END'):
-                        DiffTime = 0
-                    if DiffTime<0:
-                        print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
-                        DiffTime = 0
-                        print("Difftime solved to 0")
-                    if DiffTime>350:
-                        print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
-                        DiffTime = 0
-                        print("Difftime solved to 0")
-                    Mat3.loc[pandasframe3.index[Index], PlayersPlayed2] += DiffTime
+            if PlayersPlayed != []:    
+                DiffTime = (CurrentTime-PrevTime).total_seconds()
+                if (CurEventType =='FACEOFF' and PrevEventType == 'PERIOD END'):
+                    DiffTime = 0
+                if DiffTime<0:
+                    print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
+                    DiffTime = 0
+                    print("Difftime solved to 0")
+                if DiffTime>350:
+                    print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
+                    DiffTime = 0
+                    print("Difftime solved to 0")
+                Mat3.loc[pandasframe3.index[Index], PlayersPlayed2] += DiffTime
 
             
             ### Calculation of Matrices for Value and PlusMins (Mat, Mat2)

@@ -19,7 +19,7 @@ value_iteration <- function(states, n, c) {
   return(q)
 }
 
-system.time(q <- value_iteration(states, 100000, 0.0001))
+system.time(q <- value_iteration(states = states, n = 100000, c= 0.0001))
 write.csv(q, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table.csv")
 write.csv(q, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
 
@@ -35,3 +35,6 @@ z$V4<-b
 write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table_norm.csv")
 write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2_norm.csv")
 
+q<-read.csv( file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
+hist(q$V3)
+head(q)
