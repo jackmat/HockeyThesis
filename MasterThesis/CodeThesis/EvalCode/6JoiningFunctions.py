@@ -178,7 +178,6 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
     for match in range(len(Matches)):
         PrevTime = datetime.timedelta(0,0)
         CurrentTime= datetime.timedelta(0,0)
-        PrevVal = 0
         CurVal= 0
         CurEventType = ''
         PrevEventType = ''
@@ -211,7 +210,6 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
 #            print(MatchId, EventNumber)
             if i >0: 
                 PrevTime = CurrentTime                
-                PrevVal = CurVal 
                 PrevEventType = CurEventType
             else: 
                 PrevTime = datetime.timedelta(0,0)
@@ -251,21 +249,47 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
                     print("Difftime solved to 0")
                 Mat3.loc[pandasframe3.index[Index], PlayersPlayed2] += DiffTime
 
-            
+            # If CurEventType in Action_Events:
+            ### select probability of next Event performed (by another player)
+            ###### if next event is an action as well,  my action has an effect, therefore impact and so DiffValue
+            ###### else  DiffValue = 0
             ### Calculation of Matrices for Value and PlusMins (Mat, Mat2)
             if CurEventType in ACTION_EVENTS:
                 if PlayerId != '':
+                    PostVal, PostActionType = NextProbability(GameId= MatchId,
+                                              EventNumber= EventNumber+1,
+                                              c = c,
+                                              d=d , 
+                                              Venue = Venue)
                     if str(PlayerId) in list(Mat.columns):                 
-                        DiffValue = (CurVal-PrevVal)
-#                        print(DiffValue)
-                        if (CurEventType =='FACEOFF' and PrevEventType == 'PERIOD END'):
+                        if PostActionType in ACTION_EVENTS:
+                            DiffValue = (PostVal - CurVal)
+                        else: 
                             DiffValue = 0
+                        
                         Mat.loc[pandasframe.index[Index], str(PlayerId)] += DiffValue # This is Player Val
                         Mat2.loc[pandasframe2.index[Index], PlayersPlayed2] += DiffValue # This is PlusMinus
     return Mat, Mat2, Mat3
     
 
 
+def NextProbability(GameId, EventNumber, c,d, Venue ):
+    query = """
+                    SELECT Prob_next_{0}_goal, EventType
+                    FROM q_fulltable
+                    WHERE GameId = {1}
+                    AND EventNumber = {2}
+            """.format(Venue, GameId, EventNumber)
+    c.execute(query)
+    result = c.fetchall()
+    try:
+        NextVal = result[0][0]
+        PostActionType = result[0][1]
+    except IndexError:
+        print(GameId, EventNumber, query, Venue)
+    return(NextVal, PostActionType)
+    
+    
 def JoinListpdMatrices(pdMatList, jointype= 'outer'):
     # =============================================================================
     #     ### Description: Returning a pd.Dataframe from a list of Dataframes 

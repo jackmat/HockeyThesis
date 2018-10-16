@@ -13,6 +13,7 @@ SalariesCalc <- FALSE # Changing to True when scrapped Data is on the varible Sa
 loadpath<-"C:/Users/Carles/Desktop/MasterThesis/CodeThesis/CleanDatasets/" 
 RegularMatches<-82
 path = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
+FilepathSrotingPlots<- "C:/Users/Carles/Desktop/MasterThesis/ResultsPhotos/"
 
 ### Loading Datasets
 CDataset<-read.csv(paste0(loadpath, Season, "CDataset.csv"),check.names=FALSE)
@@ -186,7 +187,7 @@ TestModelEvaluation<-TestErrorsforDatasets%>%
         MeanACF1 = mean(ACF1, na.rm =T),  SdACF1 = sd(ACF1, na.rm =T))
 
 # Plotting  metrics distribution for data1 and two
-ggplot(df2_melted%>%filter(variable !="Theil's U" ))+
+TrainHistComparison<-ggplot(df2_melted%>%filter(variable !="Theil's U" ))+
   facet_grid(DataframeName~variable, drop = T, scales = "free")+
   geom_histogram(aes(x=value, y=(..count..)/tapply(..count..,..PANEL..,sum)[..PANEL..]))+
   labs(subtitle=paste0("Accuracy distribution comparison for trained data in ", Season,"-",Season+1), 
@@ -197,7 +198,7 @@ ggplot(df2_melted%>%filter(variable !="Theil's U" ))+
   )
 
 df2_meltedTest<-melt(TestErrorsforDatasets,id.vars = "DataframeName")
-ggplot(df2_meltedTest%>%filter(variable !="Theil's U"))+
+TestHistComparison<-ggplot(df2_meltedTest%>%filter(variable !="Theil's U"))+
   facet_grid(DataframeName~variable, drop = T, scales = "free")+
   geom_histogram(aes(x=value, y=(..count..)/tapply(..count..,..PANEL..,sum)[..PANEL..]))+
   labs(subtitle=paste0("Accuracy distribution comparison for test data in ", Season,"-",Season+1), 
@@ -206,3 +207,29 @@ ggplot(df2_meltedTest%>%filter(variable !="Theil's U"))+
        title= paste0("Metric analysis of player's evaluation prediction")#, 
        #caption = "Source: Carles Illustration"
   )
+listPlots<- list()
+listPlots[[1]]<-TrainHistComparison # CHangning the date only to written once
+listPlots[[2]]<-TestHistComparison
+
+NamePlots<- c(paste0(Season," Error distribution of the forecast for Trained Data in", Season),
+              paste0(Season," Error distribution of the forecast for predicted Data points in ", Season),
+              paste0(Season," Table evaluation of the models for Trained Data in comparison to basic ARIMA (0,0,0) for ",Season),
+              paste0(Season," Table evaluation of the models for predicted Data in comparison to basic ARIMA (0,0,0) for ",Season))
+              # Can I say it has a higher impact than the other measures on salary ?
+NamePlots<-gsub(" ", "",gsub("[^[:alnum:] ]", "", NamePlots))
+
+for( i in 1:length(listPlots)){
+  totname<-paste0(FilepathSrotingPlots,NamePlots[i],'.png')
+  ggsave(plot= listPlots[[i]], file = totname,  device = 'png', limitsize = FALSE)
+  # make plot
+}
+
+listTables<- list()
+listTables[[1]]<-TrainModelEvaluation
+listTables[[2]]<-TestModelEvaluation
+
+print(xtable(listTables[[1]], type = "latex"), file = paste0(FilepathSrotingPlots,NamePlots[3],'.tex'))
+write.table(listTables[[1]], paste0(FilepathSrotingPlots,NamePlots[3],".csv"))
+print(xtable(listTables[[2]], type = "latex"), file = paste0(FilepathSrotingPlots,NamePlots[4],'.tex'))
+write.table(listTables[[2]], paste0(FilepathSrotingPlots,NamePlots[4],".csv"))
+

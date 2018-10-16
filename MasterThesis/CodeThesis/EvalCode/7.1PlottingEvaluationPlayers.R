@@ -306,6 +306,7 @@ NamePlots<- c(paste0(Season,NameVar," Box summary of players Evaluation for all 
             paste0(Season,NameVar,  " Scaled separated regression Total metrics to Salary all players in ", Season),
             paste0(Season,NameVar,  " GeneralTableWithMetrics"))  
               # Can I say it has a higher impact than the other measures on salary ?
+NamePlots<-gsub(" ", "",gsub("[^[:alnum:] ]", "", NamePlots))
 
 for( i in 1:length(listPlots)){
   totname<-paste0(FilepathSrotingPlots,NamePlots[i],'.png')
