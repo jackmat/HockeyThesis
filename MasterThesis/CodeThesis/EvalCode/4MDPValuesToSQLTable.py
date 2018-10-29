@@ -23,6 +23,7 @@ def main():
     #     #     Variables Prob_next_home_goal and Prob_next_away_goal created
     #                     
     # =============================================================================
+    TableCreation()
 
     state_graph_db = MySQLdb.connect(host = '127.0.0.1',
                                         port = 3306,
@@ -38,14 +39,14 @@ def main():
     ## Writing table iteration
     Node_info= pd.read_sql_query("SELECT * FROM node_info", state_graph_db )
     ## Passing it to Node_info which stores the reference to each NodeId being current
-    Data2 = pd.merge(Node_info, qtable, how='left', left_on=['current'], right_on=['NodeId'])
+    Data2 = pd.merge(Node_info, qtable, how='left', left_on=['EndingId'], right_on=['NodeId'])
     
     # Joining also Data from nodes
     Nodes= pd.read_sql_query("SELECT * FROM nodes", state_graph_db )
     Data3 = pd.merge(Data2, Nodes, how='left', left_on=['NodeId'], right_on=['NodeId'])
     FullData= Data3[['GameId', 'EventNumber', 'NodeId','expected_goals',
                    'probability_next_home_goal',  'probability_next_away_goal',
-                   'EventType','GD','MD','Period','TeamId','PlayerId','Zone']]
+                   'NodeName','GD','MD','Period','Team','PlayerId','Zone']]
     list(FullData.columns) 
     # ['GameId','EventNumber','NodeId','expected_goals',
     #  'probability_next_home_goal', 'probability_next_away_goal','EventType', 'GD','MD','Period',
@@ -80,23 +81,7 @@ def main():
     for row in FullDataVal:
         GameId = row[0]
         EventNumber = row[1]
-        NodeId= row[2]
-        expected_goals = row[3]
-        probability_next_home_goal =row[4]
-        probability_next_away_goal = row[5]
-# =============================================================================
-#         if float(row[4])>0:
-#             if float(row[5])>0:
-#                 probability_next_home_goal =  str(float(row[4])/(float(row[4])+float(row[5])))
-#         else:
-#             probability_next_home_goal = str(0)
-#         if float(row[5])>0:
-#             if float(row[4])>0:
-#                 probability_next_away_goal = str(float(row[5])/(float(row[4])+float(row[5])))
-#         else:
-#             probability_next_away_goal = str(0)
-#             
-# =============================================================================
+        NodeId= row[2]            
         EventType_y= row[6]
         GD= row[7]
         MD = row[8]
@@ -104,14 +89,11 @@ def main():
         Zone = row[12]
         query = "".join(["""UPDATE q_fulltable    
                 SET NodeId = """, NodeId,
-                    ", ExpGoals = ",expected_goals, 
-                    ", Prob_next_home_goal = ", probability_next_home_goal,
-                    ", Prob_next_away_goal = ", probability_next_away_goal,
- #                   ", Event = '", EventType_y,"'",
- #                   ", GD = ", GD, 
- #                   ", MD = ", MD,
- #                   ", Zone = '", Zone,"'",    
- #                   ", Team = '", Team,"'",     
+                   ", Event = '", EventType_y,"'",
+                   ", GD = ", GD, 
+                   ", MD = ", MD,
+                   ", Zone = '", Zone,"'",    
+                   ", Team = '", Team,"'",     
                 " WHERE GameId = " ,GameId,
                 " AND EventNumber = ",EventNumber]) 
         cursor.execute(query)
@@ -124,7 +106,6 @@ def main():
     nhl.commit()        
     print("Dataset filled")
 def TableCreation():
-    
     nhl= MySQLdb.connect(host = '127.0.0.1',
                                     port = 3306,
                                     user="root", 
@@ -137,37 +118,38 @@ def TableCreation():
         CREATE TABLE q_fulltable 
         SELECT * FROM `play_by_play_events` WHERE GameId >= 2007020001
     """
-    cursor.execute(query)
-    cursor.fetchall()    
+    cursor.execute(query)    
+    nhl.commit()
     ##GD, MD, Period = PeriodNumber already there
     ## Creating extra TeamId, PlayerId to store players IDs
     query = """
     ALTER TABLE q_fulltable 
     ADD COLUMN MD INT,
-    ADD COLUMN GD INT, ADD Zone VARCHAR(20),
-    ADD COLUMN Event VARCHAR(20),ADD PlayerId INT,
-    ADD COLUMN Team VARCHAR(20), ADD NodeId INT,
-    ADD COLUMN ExpGoals FLOAT,
-    ADD COLUMN Prob_next_home_goal FLOAT,
-    ADD COLUMN Prob_next_away_goal FLOAT,
-    ADD COLUMN TeamIdHome INT,
-    ADD COLUMN TeamIdAway INT
+    ADD COLUMN GD INT, 
+    ADD COLUMN Zone TEXT CHARACTER SET utf8,
+    ADD COLUMN Event TEXT CHARACTER SET utf8,
+    ADD COLUMN PlayerId INT,
+    ADD COLUMN Team TEXT CHARACTER SET utf8, 
+    ADD COLUMN NodeId INT
+
     """
-    cursor.execute(query)    
-    cursor.fetchall()
+    write_to_db(nhl, cursor, query)
     
-# =============================================================================
-#     query = """
-#     ALTER TABLE q_fulltable ADD INDEX GameId, 
-#     ADD INDEX EventNumber
-#     """
-#     cursor.execute(query)    
-#     cursor.fetchall()
-#     
-# =============================================================================
-    print("Table Created")    
-    nhl.close()
-    pass
+    query = "ALTER TABLE q_fulltable ADD INDEX (GameId);"
+    write_to_db(nhl, cursor, query)
+    print(1)
+
+    query = "ALTER TABLE q_fulltable ADD INDEX (EventNumber);"
+    write_to_db(nhl, cursor, query)
+    query = "ALTER TABLE q_fulltable ADD INDEX (ExternalEventId);"
+    write_to_db(nhl, cursor, query)
+    print("index added") 
+    
+def write_to_db(db, c, q):
+#    try:
+        c.execute(q)
+        db.commit()
+
 
 if __name__ == "__main__":
     main()

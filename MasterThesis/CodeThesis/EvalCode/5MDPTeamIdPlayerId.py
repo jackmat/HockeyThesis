@@ -46,10 +46,11 @@ def main():
     results = db_cursor.fetchall()
     nr_of_games = 0
     print("Number of games: {0}".format(len(results)))
-    for row in results:
+    
+    for row in results[9012:]:
         Idmatch = row[0]
         GetPlayerIds(Idmatch, db_connection, db_cursor)
-        GetTeamId(Idmatch, db_connection, db_cursor)           
+#        GetTeamId(Idmatch, db_connection, db_cursor)           
         db_connection.commit()        
         
         nr_of_games += 1
@@ -149,9 +150,8 @@ def GetPlayerIds(IdMatch, d,  c):
     # =============================================================================
 
     query = """SELECT GameId, EventNumber, EventType, Team FROM q_fulltable   
-			WHERE GameId = {0} and (EventType IN {1} or EventType IN {2})
-			ORDER BY EventNumber ASC
-			""".format(IdMatch, ACTION_EVENTS, START_END_EVENTS)
+			WHERE GameId = {0} and EventType IN {1} 			ORDER BY EventNumber ASC
+			""".format(IdMatch, ACTION_EVENTS)
     c.execute(query)
     res = c.fetchall()
     for row in res:
@@ -159,49 +159,40 @@ def GetPlayerIds(IdMatch, d,  c):
         EventNum = row[1]
         event = row[2]
         team = row[3]
-        if event in ['FACEOFF', 'SHOT', 'MISSED SHOT', 'BLOCKED SHOT', 'TAKEAWAY', 'GIVEAWAY', 'HIT', 'GOAL', 'PENALTY']:
-            team_id, table_name, external_id_name, PlayerIdCol = get_table_info(event, team)
-            print(GameId, EventNum, event)
-            if event == 'FACEOFF':                    
-                if team !="": 
-                    
-                    query2= """
-                     SELECT {0}      
-                     FROM  {1}
-                     WHERE GameId = {2} AND EventNumber = {3}
+        team_id, table_name, external_id_name, PlayerIdCol = get_table_info(event, team)
+#        print(GameId, EventNum, event)
+        if event == 'FACEOFF':                    
+            if team !="": 
                 
-                """.format(PlayerIdCol, table_name, GameId, EventNum)
-#                print(query2)
-                c.execute(query2)
-                tuppleid = c.fetchall()
-                play = tuppleid[0][0]
-                if play not in (None,""):
-                    query3= """
-                    UPDATE q_fulltable
-                    SET PlayerId = {0}
-                    WHERE GameId = {1} AND EventNumber = {2}
-                    """.format(play, GameId, EventNum)
-                    c.execute(query3)
-                    
-#               print(team)
-            else:
                 query2= """
-                     SELECT {0}      
-                     FROM  {1}
-                     WHERE GameId = {2} AND EventNumber = {3}
-                
-                """.format(PlayerIdCol, table_name, GameId, EventNum)
+                 SELECT {0}      
+                 FROM  {1}
+                 WHERE GameId = {2} AND EventNumber = {3}
+            
+            """.format(PlayerIdCol, table_name, GameId, EventNum)
+#                print(query2)               
+#               print(team)
+        else:
+            query2= """
+                 SELECT {0}      
+                 FROM  {1}
+                 WHERE GameId = {2} AND EventNumber = {3}
+            
+            """.format(PlayerIdCol, table_name, GameId, EventNum)
 #                print(query2)
-                c.execute(query2)
-                tuppleid = c.fetchall()
-                play = tuppleid[0][0]
-                if play not in (None,""):
-                    query3= """
-                    UPDATE q_fulltable
-                    SET PlayerId = {0}
-                    WHERE GameId = {1} AND EventNumber = {2}
-                    """.format(play, GameId, EventNum)
-                    c.execute(query3)
+        c.execute(query2)
+        tuppleid = c.fetchall()
+        try:
+            play = tuppleid[0][0]
+        except IndexError:
+            print(query2)            
+        if play not in (None,""):
+            query3= """
+            UPDATE q_fulltable
+            SET PlayerId = {0}
+            WHERE GameId = {1} AND EventNumber = {2}
+            """.format(play, GameId, EventNum)
+            c.execute(query3)
                 
 # =============================================================================
 #     pr.disable()  # end profiling
@@ -258,10 +249,11 @@ if __name__ == "__main__":
 
 
 # =============================================================================
-# import pandas as pd
-# results= pd.read_sql_query(query, d).values
+# =============================================================================
+#  import pandas as pd
 # pd.read_sql_query("SHOW PROCESSLIST", db_connection)
-# db_cursor.execute("kill 32")
-# 
+#  db_cursor.execute("kill 1983")
+# # 
+# =============================================================================
 # =============================================================================
 

@@ -8,15 +8,15 @@ ExtactingSeasonPLayerSalariesStats<- function(Season){
   
   for( j in 1:length(TeamVect)){
     teamNum<- TeamVect[j]
-    url<- paste0("http://dropyourgloves.com/Stat/Players.aspx?League=,1&Team=",teamNum,"&Season=", Seasonyear)
+    url<- paste0("http://dropyourgloves.com/Stat/Players.aspx?League=1&Team=",teamNum,"&Season=", Season)
     tables <- readHTMLTable(url)
     GoodTable<-tables[2]$`NULL`
     Onetab<-GoodTable[-1,]
     print(paste0(dim(Onetab)[2] ," columns in Team ", j))
     EndingCols<-c("GP", "G", "GA", "PlusMin", "PIMs", "Total",
                   "ClearWins", "Good", "NHL", "GordyHowesort","My")
-    Firstcolnames<- c("#", "P","Player", "Age", "Salary")
-    diff<-  dim(Onetab)[2]-16
+    Firstcolnames<- c("#", "P","Player", "Age","Drafted,", "Salary")
+    diff<-  dim(Onetab)[2]-17
     x<-rep("X",diff)
     colnames(Onetab)<- c(Firstcolnames, x, EndingCols)
     

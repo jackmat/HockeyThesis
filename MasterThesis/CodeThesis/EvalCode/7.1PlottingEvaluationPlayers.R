@@ -129,7 +129,7 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
     xlim(c(quantiles[1],quantiles[2])) 
   
   boxplot1 <-ggplot(Datasetdiff0, aes(x ="", y=value))+ 
-    facet_grid(.~Dat)+ coord_cartesian(ylim = c(-10, 7))+
+    facet_grid(.~Dat)+ coord_cartesian(ylim = c(-10, 17))+
     labs(subtitle=paste0("Box plot distritbution (Outliers not shown)"), 
            y="Valuation range", 
            x="", 
@@ -143,7 +143,7 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
 ####################### Time Series Evaluation  
   MeanVal <- MyQuantileApplication(Data= CDataset, DatVar = "Val")
   TimeVal <- MyQuantileApplication(Data= TimeDataset, DatVar = "Val/h")
-  PlusMinVal <- MyQuantileApplication(Data= PMDataset, DatVar = "+/- Val")
+  PlusMinVal <-a MyQuantileApplication(Data= PMDataset, DatVar = "+/- Val")
   TimePlusMinVal <- MyQuantileApplication(Data= PlusMinusTimeDataset, DatVar = "+/- Val/h")
   
   totuData<- rbind(MeanVal, TimeVal, PlusMinVal, TimePlusMinVal)
@@ -188,9 +188,14 @@ totPath <- paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/EvalCode/",
                   "scrappingSalariesNHL.R")
 source(totPath)
 Seasonyear<- Season+1 # 2008 stands for 2007-2008 and so on
+
 if(SalariesCalc ==FALSE){
 SalariesCalc <- TRUE
-Salaries2007<-main(Seasonyear)}
+Salaries2007<-main(Seasonyear)
+dataproof<-as.vector(filter(Salaries2007, Player == "Mike Richards"))
+  if(dataproof$Age == 22 & dataproof$Salary == 0.94){print("Data is good")}
+  else{print("problem in salaries2007")}}
+
 #Only taking into account full data
 GeneralTable<-topNAMES%>%
   mutate(TotVal = apply(CDataset[,2:ncol(CDataset)],2,sum))%>%

@@ -27,7 +27,7 @@ def StateTableCreation(name):
     cursor = con.cursor()
 
     edgessql = '''CREATE TABLE edges (
-           FromId int(11),
+           FromId int(11) ,
            ToId int(11),
            Occurrence int(11)
            ) 
@@ -43,15 +43,15 @@ def StateTableCreation(name):
     cursor.execute(sql)
 
     nodessql = '''CREATE TABLE nodes (
-           NodeId int(11),
-           NamesID VARCHAR(255) ,
-           EventTypeId VARCHAR(255),
+           NodeId int(20),
+           NodeType TEXT CHARACTER SET utf8,
+           NodeName TEXT CHARACTER SET utf8,
            GD int(11),
            MD int(11),
            Period int(11),
-           TeamId VARCHAR(20),
-           PlayerId VARCHAR(20),
-           Zone VARCHAR(20),
+           Team TEXT CHARACTER SET utf8,
+           PlayerId TEXT CHARACTER SET utf8,
+           Zone TEXT CHARACTER SET utf8,
            Occurrence int(11)) 
            '''
     
@@ -64,8 +64,8 @@ def StateTableCreation(name):
     node_infosql = '''CREATE TABLE node_info(
            GameId int(11),
            EventNumber int(11) ,
-           previous int(11),
-           current int(11) 
+           StartingId int(11),
+           EndingId int(11) 
            ) 
            '''
     
@@ -74,14 +74,15 @@ def StateTableCreation(name):
     
     rewardssql = '''CREATE TABLE rewards(
            NodeId int(11),
-           RewardGoal int(11),
-           RewardWin int(11)
+           RewardGoal double,
+           RewardWin double
            ) 
            '''
     
     cursor.execute(rewardssql)
     print("Table rewards created")
     con.commit()
+    con.close()
     pass
 
 StateTableCreation(name= name)

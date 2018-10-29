@@ -41,6 +41,8 @@ def main():
                                 passwd='')
     
     c= d.cursor()
+    
+    
     for Season in range(2007,2015):
         print(Season)
 #    Season = 2007
@@ -171,6 +173,13 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
     #                     
     # =============================================================================
 
+    d_state_graph = MySQLdb.connect(host = '127.0.0.1',
+                                port = 3306, 
+                                db='state_graph_2', 
+                                user='root', 
+                                passwd='')
+    c_state_graph= d_state_graph.cursor()
+    
     Matches = pandasframe.GameId.values   
     Mat = pandasframe
     Mat2 = pandasframe2
@@ -178,7 +187,6 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
     for match in range(len(Matches)):
         PrevTime = datetime.timedelta(0,0)
         CurrentTime= datetime.timedelta(0,0)
-        CurVal= 0
         CurEventType = ''
         PrevEventType = ''
 #match = 0        
@@ -199,13 +207,13 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
             break
         query = """SELECT EventNumber
                     FROM q_fulltable
-                    WHERE GameId  = {0}
+                    WHERE GameId  = {0}                     
                     ORDER BY EventNumber
         """.format(MatchId)        
         c.execute(query)
         EventIndex = c.fetchall()
         for i in range(len(EventIndex)):
-#i = 0            
+#i = 2            
             EventNumber =  EventIndex [i][0]
 #            print(MatchId, EventNumber)
             if i >0: 
@@ -219,7 +227,7 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
     
                        
             query = """
-                    SELECT EventType, PlayerId, Prob_next_{0}_goal, EventTime
+                    SELECT EventType, PlayerId, EventTime
                     FROM q_fulltable
                     WHERE GameId = {1}
                     AND EventNumber = {2}
@@ -228,8 +236,7 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
             result = c.fetchall()
             CurEventType = result[0][0]
             PlayerId = result[0][1]
-            CurVal = result[0][2]
-            CurrentTime = result[0][3]
+            CurrentTime = result[0][2]
             ### Calculation of Matrices for time (Mat3)
             if CurEventType == 'PERIOD START':
                 PrevTime = datetime.timedelta(0,0)
@@ -242,11 +249,9 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
                 if DiffTime<0:
                     print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
                     DiffTime = 0
-                    print("Difftime solved to 0")
                 if DiffTime>350:
                     print(MatchId, EventNumber, DiffTime, CurrentTime, PrevTime, CurEventType, PrevEventType)
                     DiffTime = 0
-                    print("Difftime solved to 0")
                 Mat3.loc[pandasframe3.index[Index], PlayersPlayed2] += DiffTime
 
             # If CurEventType in Action_Events:
@@ -256,37 +261,130 @@ def ValuePlusMinusTimeFunc(Team, pandasframe, pandasframe2, pandasframe3, c,d):
             ### Calculation of Matrices for Value and PlusMins (Mat, Mat2)
             if CurEventType in ACTION_EVENTS:
                 if PlayerId != '':
-                    PostVal, PostActionType = NextProbability(GameId= MatchId,
-                                              EventNumber= EventNumber+1,
-                                              c = c,
-                                              d=d , 
-                                              Venue = Venue)
-                    if str(PlayerId) in list(Mat.columns):                 
-                        if PostActionType in ACTION_EVENTS:
-                            DiffValue = (PostVal - CurVal)
-                        else: 
-                            DiffValue = 0
+                    query = """SELECT * FROM `node_info`   
+                            WHERE GameId = {0} and EventNumber = {1}
+                            """.format(MatchId, EventNumber)
+                    c_state_graph.execute(query)
+                    result = c_state_graph.fetchall()
+                    From_id = result[0][2]
+                    To_id = result[0][3]
+                    
+                    query = """ SELECT * FROM q_table
+                    WHERE NodeId = {0} """.format(From_id)
+                    c.execute(query)
+                    myres = c.fetchall()
+                    
+################################################## Need to check in this part the number
+                    if Venue == "home":
+                        from_id_value = myres[0][2]
                         
-                        Mat.loc[pandasframe.index[Index], str(PlayerId)] += DiffValue # This is Player Val
-                        Mat2.loc[pandasframe2.index[Index], PlayersPlayed2] += DiffValue # This is PlusMinus
-    return Mat, Mat2, Mat3
+                        query = """ SELECT * FROM q_table
+                                WHERE NodeId = {0} """.format(To_id)
+                        c.execute(query)
+                        result = c.fetchall()
+                        to_id_value = result[0][2]
+                    elif Venue == "away":
+                        from_id_value = myres[0][3]
+                        
+                        query = """ SELECT * FROM q_table
+                                WHERE NodeId = {0} """.format(To_id)
+                        c.execute(query)
+                        result = c.fetchall()
+                        to_id_value = result[0][3]
+                    else:
+                        print(query, Venue)
+                        break;
+                        
+                    # impact = Q(S*a) - Q(s)
+                    action_values = to_id_value - from_id_value
+                    try:
+                        Mat.loc[pandasframe.index[Index], str(PlayerId)] += action_values # This is Player Val
+                        Mat2.loc[pandasframe2.index[Index], PlayersPlayed2] += action_values # This is PlusMinus
+                    except KeyError:
+                        print(MatchId, EventNumber ,PlayerId, action_values, PlayerId, PlayersPlayed2, "problem!")
+                        break
+
+                    
+# =============================================================================
+#                     FromId, ToId = NodeSelectionFromStateGraph(GameId= MatchId,
+#                                               EventNumber= EventNumber,
+#                                               c = c_state_graph,
+#                                               d=d_state_graph , 
+#                                               NodeId = NodeId)
+#                     PostVal, PostActionType = NextProbability(NodeId = ToId, 
+#                                                               Venue =  Venue,
+#                                                               c=c,
+#                                                               d=d)
+#                     
+#                     if str(PlayerId) in list(Mat.columns):                 
+#                         if PostActionType in ACTION_EVENTS:
+#                             DiffValue = (PostVal - CurVal)
+#                         else: 
+#                             DiffValue = 0
+#                         
+#                         Mat.loc[pandasframe.index[Index], str(PlayerId)] += DiffValue # This is Player Val
+#                         Mat2.loc[pandasframe2.index[Index], PlayersPlayed2] += DiffValue # This is PlusMinus
+#     return Mat, Mat2, Mat3
+# =============================================================================
     
-
-
-def NextProbability(GameId, EventNumber, c,d, Venue ):
+# =============================================================================
+# def NodeSelectionFromStateGraph(c_state ,d_state, GameId, EventNumber):
+#     query="""
+#                     SELECT FromId, ToId
+#                     FROM edges, node_info
+#                     WHERE 
+#                     current = FromId
+#                     AND GameId = {0}
+#                     AND EventNumber = {1}
+#                 """.format(GameId, EventNumber)
+#     c_state_graph.execute(query)
+#     result = c_state_graph.fetchall()
+#     try:
+#         FromId = result[0][0]
+#         NextNode = result[0][1]
+#     except IndexError:
+#         print(result, GameId, EventNumber, query)
+#     return(result)
+# 
+# =============================================================================
+def NodeSelectionFromStateGraph(c_state ,d_state, GameId, EventNumber):
+    query="""
+                    SELECT ToId
+                    FROM node_info, edges
+                    WHERE 
+                    current = FromId
+                    AND GameId = {0}
+                    AND EventNumber = {1}
+                """.format(GameId, EventNumber)
+    c_state_graph.execute(query)
+    result = c_state_graph.fetchall()
+    try:
+        FromId = result[0][0]
+        NextNode = result[0][1]
+    except IndexError:
+        print(result, GameId, EventNumber, query)
+    return(result)
+                
+# =============================================================================
+# NodeSelectionFromStateGraph(c_state =c_state_graph, 
+#                         d_state = d_state_graph,
+#                         GameId = 2007020005,
+#                         EventNumber = 2)
+# 
+# =============================================================================
+def NextProbability(NodeId, c,d, Venue ):
     query = """
                     SELECT Prob_next_{0}_goal, EventType
                     FROM q_fulltable
-                    WHERE GameId = {1}
-                    AND EventNumber = {2}
-            """.format(Venue, GameId, EventNumber)
+                    WHERE NodeId = {1}
+            """.format(Venue, NodeId)
     c.execute(query)
     result = c.fetchall()
     try:
         NextVal = result[0][0]
         PostActionType = result[0][1]
     except IndexError:
-        print(GameId, EventNumber, query, Venue)
+        print(NodeId, result, query, Venue)
     return(NextVal, PostActionType)
     
     

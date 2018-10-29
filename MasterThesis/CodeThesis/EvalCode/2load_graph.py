@@ -25,7 +25,7 @@ def main():
                     e.Occurrence,
                     r.RewardGoal,
                     r.RewardWin,
-                    n.TeamId,
+                    n.Team,
                     n.PlayerId
                 FROM nodes n
                 LEFT JOIN edges e

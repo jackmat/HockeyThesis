@@ -231,14 +231,37 @@ def add_events_to_tree(game_id, tree, db, c):
         team = ""
         if team_id:     
             query = """SELECT AwayTeamId, HomeTeamId, {0}, Zone FROM {1}
-                        WHERE {2} = {3};
-                        """.format(team_id, table_name, external_id_name, event_id)
+                        WHERE {2} = {3} AND EventNumber = {4} AND GameId = {5};
+                        """.format(team_id, table_name, external_id_name, event_id, event_nr, game_id)
             result = fetch_all_from_db(db, c, query)
-            if result[0][0] == result[0][2]: #awayteam
-                team = "away"
-            elif result[0][1] == result[0][2]: #hometeam
-                team = "home"
+            ## This is done just in case beacuse in shotId 272297 there is no gameId associated
+            if result == ():
+                print("first jump")
+                print(result, event_nr, game_id, query)
+                query = """SELECT AwayTeamId, HomeTeamId, {0}, Zone FROM {1}
+                WHERE {2} = {3} AND EventNumber = {4} ;
+                """.format(team_id, table_name, external_id_name, event_id, event_nr)
+                result = fetch_all_from_db(db, c, query)
+                if result == ():
+                    print("second jump")
+                    print(result, event_nr, game_id, query)
+                    query = """SELECT AwayTeamId, HomeTeamId, {0}, Zone FROM {1}
+                    WHERE {2} = {3} ;
+                    """.format(team_id, table_name, external_id_name, event_id)
+                    result = fetch_all_from_db(db, c, query)
+            try:
+                if result[0][0] == result[0][2]: #awayteam
+                    team = "away"
+                elif result[0][1] == result[0][2]: #hometeam
+                    team = "home"
+            except IndexError:
+                print(query, result)
+                break
             zone = result[0][3]
+            if zone == None:
+#                print(game_id, event_nr)
+                zone = 'unspecified'
+            
         #create new ADnode
         tree.add_event(game_id, md, gd, period, event_type, event_nr, zone, team, player_id, event_time)
         # Update goal differential

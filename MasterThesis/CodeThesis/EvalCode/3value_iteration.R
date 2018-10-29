@@ -5,7 +5,6 @@ states <- read.csv(file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/state_g
 colnames(states) <- c("NodeId", "Occurrence", "ChildId", "ChildOccurrence", "RewardGoal", "RewardWin", "Team", "PlayerId")
 sourceCpp("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/EvalCode/value_iteration/value_iteration_f.cpp")
 # states <- states[,2:9] # When stored, an index was created which is now eliminated 
-
 #value iteration
 value_iteration <- function(states, n, c) {
   #Init variables
@@ -24,17 +23,18 @@ write.csv(q, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table.csv")
 write.csv(q, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
 
 ##NodeId, expected_goals, probability_next_home_goal, probability_next_away_goal
-Dataset<-read.csv(file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
-#head(Dataset)
-z<-Dataset
-head(z,10)
-a<-z$V3/(z$V3+z$V4)
-b<-z$V4/(z$V3+z$V4)
-z$V3<-a
-z$V4<-b
-write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table_norm.csv")
-write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2_norm.csv")
 
-q<-read.csv( file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
-hist(q$V3)
-head(q)
+#Dataset<-read.csv(file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
+#head(Dataset)
+# z<-Dataset
+# head(z,10)
+# a<-z$V3/(z$V3+z$V4)
+# b<-z$V4/(z$V3+z$V4)
+# z$V3<-a
+# z$V4<-b
+# write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table_norm.csv")
+# write.csv(z, file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2_norm.csv")
+# 
+# q<-read.csv( file="C:/Users/Carles/Desktop/MasterThesis/CodeThesis/q_table2.csv")
+# hist(q$V3)
+# head(q)
