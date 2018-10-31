@@ -120,7 +120,7 @@ for( i in 1:length(listPlots)){
 }
 
 listTables<- list()
-listTables[[1]]<-MostTypicalModelperRange
+listTables[[1]]<-MostTypicalModelperRange%>% arrange(Range)
 listTables[[2]]<-BiggerModelsPerRange
 
 print(xtable(listTables[[1]], type = "latex"), file = paste0(FilepathSrotingPlots,NamePlots[3],'.tex'))

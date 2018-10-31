@@ -26,8 +26,8 @@ TimeDataset<-TimeDataset[,2:length(TimeDataset)]
 PlusMinusTimeDataset<-PlusMinusTimeDataset[,2:length(PlusMinusTimeDataset)]
 PMDataset<-PMDataset[,2:length(PMDataset)]
 SecTimeDataset<-SecTimeDataset[,2:length(SecTimeDataset)]
-lengthseries<-30
-holdout<-5
+lengthseries<-6
+holdout<-1
 
 ###################
 # I am going to take all data with more than 30 observations and put their 
@@ -224,6 +224,9 @@ for( i in 1:length(listPlots)){
   # make plot
 }
 
+options("scipen"=-100, "digits"=2)
+options("scipen"=100, "digits"=2)
+options("scipen"=0, "digits"=2)
 listTables<- list()
 listTables[[1]]<-TrainModelEvaluation
 listTables[[2]]<-TestModelEvaluation

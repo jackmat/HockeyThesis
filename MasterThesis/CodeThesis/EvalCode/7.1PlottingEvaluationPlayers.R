@@ -12,13 +12,14 @@ library(plyr)
 library(RMySQL)
 library(rlang)
 
+
 ## Environment for graphics
 options(scipen=999)  # turn-off scientific notation like 1e+48 NOT SURE WHAT IT DOES
 theme_set(theme_bw())  # pre-set the bw theme.
 
 
 #### Global variables
-Boolean <- FALSE #Changing to TRUE if wanting to work with non-zero Data (reccommended)
+Boolean <- TRUE #Changing to TRUE if wanting to work with non-zero Data (reccommended)
 NameVar <-""
 NTOP<- 944
 Season<-2007
@@ -108,14 +109,14 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
   Valtimemelted<-cbind(myTime_melted, Dat="Val/h")
   PMValmelted<-cbind(myPlusMinus_melted, Dat="+/- Val")
   PlusMinusTimemelted<-cbind(PlusMinusTime_melted, Dat="+/- Val/h")
-  
+  quantile(Valmelted$value, probs = c(0.05,0.2,0.5,0.7,0.9))
   # Putting them all together in Datasetdiff0
   Datasetdiff0<- rbind(Valmelted, Valtimemelted,PMValmelted,PlusMinusTimemelted) 
-  quantiles<-quantile(Datasetdiff0$value, probs = c(0.025,0.975))
+  quantiles<-quantile(Datasetdiff0$value, probs = c(0.001,0.999))
   hist1<-ggplot(Datasetdiff0, aes(x= value))+
-    facet_grid(.~Dat, scales = "free") +
-    scale_fill_gradient("Count", low = "green", high = "red")+
-    labs(subtitle="Distribution of the 95% of the matches (Non- outliers shown)", 
+    facet_grid(.~Dat, scales = "free_x") +
+    #scale_fill_gradient("Count", low = "green", high = "red")+
+    labs(subtitle="Distribution of the 99.8% of the matches (Non- outliers shown)", 
          y="Frequency", 
          x="Player's valuation per match", 
          title= paste0("Distribution of player's valuation for ", Season,"-",Season+1)
@@ -143,7 +144,7 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
 ####################### Time Series Evaluation  
   MeanVal <- MyQuantileApplication(Data= CDataset, DatVar = "Val")
   TimeVal <- MyQuantileApplication(Data= TimeDataset, DatVar = "Val/h")
-  PlusMinVal <-a MyQuantileApplication(Data= PMDataset, DatVar = "+/- Val")
+  PlusMinVal <- MyQuantileApplication(Data= PMDataset, DatVar = "+/- Val")
   TimePlusMinVal <- MyQuantileApplication(Data= PlusMinusTimeDataset, DatVar = "+/- Val/h")
   
   totuData<- rbind(MeanVal, TimeVal, PlusMinVal, TimePlusMinVal)
@@ -161,10 +162,10 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
   #  CDataset, TimeDataset, PMDataset, PlusMinusTimeDataset
   
 ### Getting the name for the top N players
-
 TopPlayers<-TopCols(CDataset, NTOP)
 TopDataset <- subset(CDataset, select = c("CountGame",TopPlayers))
 PlayerId <- TopPlayers
+head(PlayerId)
 query = paste0("SELECT PlayerName FROM `player` WHERE PlayerId IN (", paste(PlayerId,collapse=","),")")
 topNAMES <- QueryMySQL(mydb= mydb, query = query)
 SeasonVar<- SeasonCompletename(Season = Season)
@@ -174,6 +175,7 @@ SeasonVar<- SeasonCompletename(Season = Season)
 GPquery = paste0("SELECT player.PlayerName, i.PlayerId, sum(i.GP) AS GP from player, (SELECT  DISTINCT team, PlayerId ,GP FROM `player_career_stats` WHERE Season = '",SeasonVar,"' AND SeasonType = 'Regular Season')i  WHERE i.PlayerId = player.PlayerId GROUP by PlayerId")
 GPPlayer<- QueryMySQL(mydb= mydb, GPquery)
 GPPlayers<-GPPlayer[!duplicated(GPPlayer),] #removing duplicated rows
+dim(GPPlayer)== dim(GPPlayers)
 SecTableGP<-colSums(SecTimeDataset[,2:ncol(SecTimeDataset)] != 0)
 mynames<-as.numeric(as.character(names(SecTableGP)))
 SecTableGP<-data.frame(PlayerId=mynames,
@@ -183,7 +185,7 @@ CompareGP<-left_join(SecTableGP, GPPlayers, by = "PlayerId")
 # BESTSCORESPAPER2013<-c("Jason Spezza", "Jonathan Toews","Joe Pavelski", "Marian Hossa",
 #                    "Patrick Sharp", "Sidney Crosby" , "Claude Giroux" ,"Tyler Seguin")
 
-
+#CompareGP$PlayerId<-as.factor(CompareGP$PlayerId)
 totPath <- paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/EvalCode/", 
                   "scrappingSalariesNHL.R")
 source(totPath)
@@ -197,13 +199,15 @@ dataproof<-as.vector(filter(Salaries2007, Player == "Mike Richards"))
   else{print("problem in salaries2007")}}
 
 #Only taking into account full data
-GeneralTable<-topNAMES%>%
+GeneralTable<-data.frame(id =colnames(CDataset)[2:length(CDataset)])%>%
   mutate(TotVal = apply(CDataset[,2:ncol(CDataset)],2,sum))%>%
   mutate(TotValh = apply(TimeDataset[,2:ncol(TimeDataset)],2,sum))%>%
   mutate(TotPMVal = apply(PMDataset[,2:ncol(PMDataset)],2,sum))%>%
-  mutate(TotPMValh = apply(PlusMinusTimeDataset[,2:ncol(PlusMinusTimeDataset)],2,sum))%>%
+  mutate(TotPMValh = apply(PlusMinusTimeDataset[,2:ncol(PlusMinusTimeDataset)],2,sum))
+GeneralTable$id<- as.numeric(as.character(GeneralTable$id))
+
+GeneralTable<-GeneralTable%>%left_join(CompareGP[c('PlayerId','PlayerName', 'GP','GPsec')], by = c("id"= "PlayerId"))%>% 
   left_join(Salaries2007, by = c("PlayerName"= "Player"))%>%
-  left_join(CompareGP, by = "PlayerName")%>% 
   select(PlayerName,P, Age, Salary, GPsec, G,GA, PlusMin,NHL, TotVal,TotPMVal, TotValh,TotPMValh)%>%
   filter(GPsec != 0)%>%
   dplyr::rename(GP = GPsec)%>%
@@ -217,6 +221,9 @@ GeneralTable<-topNAMES%>%
   filter(TotValh!=Inf)%>%
   filter(TotValh!=-Inf)
 
+GeneralTable[,1:11]%>% 
+  arrange(desc(TotPMVal))  %>% 
+  head(10)
 
 NamesCol<-colnames(GeneralTable)[8:length(colnames(GeneralTable))]
 for( i in 1:length(NamesCol)){
