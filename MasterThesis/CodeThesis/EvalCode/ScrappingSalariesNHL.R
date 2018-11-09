@@ -64,9 +64,3 @@ main<- function(Season){
   TotalSalaries2007<-left_join(GeneralData, EndSalaries, by = "Player")
   return(TotalSalaries2007)
 }  
-colnames(GeneralTable)
-Best<-GeneralTable%>% arrange(desc(TotVal))
-Best[1:10,1:10]
-
-Best<-GeneralTable%>% arrange(desc(TotPMVal))
-Best[1:10,1:11]

@@ -13,45 +13,22 @@ library(plyr)
 library(RMySQL)
 library(rlang)
 Season<- 2007
-# res<-rep(0, times = length(2:ncol(CDataset)))
-# 
-# for(i in 2:ncol(CDataset)){
-#   ### The steps are:
-#   #(1) Selecting the matches Played by that player 
-#   #    (if time played is 0 in the timeDataset, then that player has not played a match)
-#   myData<-CDataset[,i]
-#   mytime<- TimeDataset[,i]
-#   
-#   MyTrueData<- myData[-which(mytime==0)]
-#   #(2) Generallywise, data is already quite stationary, however, detrending is used to be sure of it
-#   MydiffData<-diff(MyTrueData)
-#     #(3) If length of the time series is more than 5 matches:
-#     if((length(MydiffData)>10)==TRUE){
-#       # (3.1) Do an adftest to check stationarity. 
-#       s<-adf.test(MydiffData)  
-#       
-#       if((s$p.value <= 0.05)==TRUE){
-#         #(3.1.1) If stationary, do modelling
-#         fit<-auto.arima(MydiffData)
-#         #paste arima model (pdq), being p=AR,d=I,q=MA
-#         res[i]<-paste0(arimaorder(fit),collapse = ",")
-#       }else{res[i]<-"Not stationary"}
-#     }else{res[i]<-"short"}
-# }
 
 ## All being (p,d,q)== (0,0,0)
+GeneralNames<-c("DirectImpact", "Direct/h", "PMImpact", "PMImpact/h")
+DatasetList<- list(CDataset, TimeDataset, PMDataset, PlusMinusTimeDataset)
+for( dataset in 1:length(DatasetList)){ 
+Data<- DatasetList[[dataset]]
 
+res<-rep(0, times = length(2:ncol(Data)))
+obs<- rep(0, times = length(2:ncol(Data)))
 
-
-res<-rep(0, times = length(2:ncol(CDataset)))
-obs<- rep(0, times = length(2:ncol(CDataset)))
-
-for(i in 2:ncol(CDataset)){
-  print(paste0(i , " out of ", ncol(CDataset)))
+for(i in 2:ncol(Data)){
+  print(paste0(i , " out of ", ncol(Data)))
   ### The steps are:
   #(1) Selecting the matches Played by that player 
   #    (if time played is 0 in the timeDataset, then that player has not played a match)
-  myData<-CDataset[,i]
+  myData<-Data[,i]
   mytime<- TimeDataset[,i]
   MyTrueData<- myData[-which(mytime==0)]
   len<-length(MyTrueData)
@@ -106,10 +83,10 @@ listPlots<- list()
 listPlots[[1]]<-hist1 # CHangning the date only to written once
 listPlots[[2]]<-Comphist
 
-NamePlots<- c(paste0(Season," Histogram display of most typical ARIMA models per Range in", Season),
-              paste0(Season," Histogram Comparison display of most typical ARIMA models per Range in", Season),
-              paste0(Season," Most typical ARIMA model for Player's valuation based on matches played by player in ",Season),
-              paste0(Season," Most typical ARIMA models for Player's valuation based on matches played by player in ",Season, " with Porbability > ", Probability))
+NamePlots<- c(paste0(Season,GeneralNames[dataset]," Histogram display of most typical ARIMA models per Range in", Season),
+              paste0(Season,GeneralNames[dataset]," Histogram Comparison display of most typical ARIMA models per Range in", Season),
+              paste0(Season,GeneralNames[dataset]," Most typical ARIMA model for Player's valuation based on matches played by player in ",Season),
+              paste0(Season,GeneralNames[dataset]," Most typical ARIMA models for Player's valuation based on matches played by player in ",Season, " with Porbability > ", Probability))
 # Can I say it has a higher impact than the other measures on salary ?
 NamePlots<-gsub(" ", "",gsub("[^[:alnum:] ]", "", NamePlots))
 
@@ -129,3 +106,4 @@ print(xtable(listTables[[2]], type = "latex"), file = paste0(FilepathSrotingPlot
 write.table(listTables[[2]], paste0(FilepathSrotingPlots,NamePlots[4],".csv"))
 
 
+}

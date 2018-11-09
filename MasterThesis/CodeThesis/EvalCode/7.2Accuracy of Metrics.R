@@ -33,7 +33,7 @@ holdout<-1
 # I am going to take all data with more than 30 observations and put their 
 # first 30 observations in the following vector
 DatasetsList<- list(CDataset, TimeDataset, PlusMinusTimeDataset, PMDataset)
-GeneralNames<-c("Val", "ValTime", "PMTime", "PM")
+GeneralNames<-c("DirectImpact", "Direct/h", "PMImpact", "PMImpact/h")
 AccuracyEvaluationData<- function(lengthseries=lengthseries,
                                   holdout= holdout,
                                   GeneralNames = GeneralNames, 
