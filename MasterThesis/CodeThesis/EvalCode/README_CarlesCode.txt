@@ -18,7 +18,7 @@ The order to use it is as following:
 4- Run 4MDPValuesToSQLTable. It creates a table with all joining with the play_by_play_events 
 	DataSet called q_fulltable in the SQL server	
 5- Run 5MDPTeamIdPlayedId. It adds the variables PlayerId and TeamAwayId and TeamHomeId to the q_fullplacetable	as well as MDP variables
-6- Run 6JoiningFunctions. It creates 3 tables with time-series metrics: Value, Time, +/- 
+6- Run 6TimeMatricesAndValuationMatrices. It creates 3 tables with time-series metrics: Value, Time, +/- 
     It saves the three pd.Dataframe into path = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
     #               path + 'PlayerValMatrix.csv'
     #               path + 'PlayerbyTimeValMatrix.csv' 
@@ -31,12 +31,18 @@ The order to use it is as following:
                   #PMDataset.csv: PlusMinus measure from Markov per match
                   #PlusMinusTimeDataset.csv:PlusMinus measure from Markov/TimePlayed per match (in hours) 
 	pathto find the Datasets = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
-8. Running 7.1PlottingEvaluationPlayers:
-	It stores in C:\Users\Carles\Desktop\MasterThesis\ResultsPhotos
-	Different Plots and interesting grpahics and Tables from the Dataset 	
-	It uses the ScrappingSalariesNHL to create plots and use the salary, +/- and NHL metrics in totalcomparison
-9. Running '7.2Accuracy of Metrics' creates tables for the different accuracy metrics for different models in the diffrent datasets 
+8. All 7 must be Runned in order and have all of them in cache. 
+	7.1.0 GeneralFunctions: It runs several functions used in 7.1.1
+	7.1.1 PlottingComparison20072008: It performs General analysis on different the dataset in General
+					It uses the ScrappingSalariesNHL to create plots and use the salary, +/- and NHL metrics in totalcomparison
+
+	7.1.2 TablesInMaster: it shows the TOP10 Tables per metric
+	7.1.3 IntuitionToChooseGoodPlayers: It Shows Player perfomance metrics per Salary and Position
+	7.2TimeseriesModelling gives you an idea of which are the models arima models chosen for different players 
+	each one taking into account how many matches he has played (put in ranges)	
+	7.3Accuracy of Metrics creates tables for the different accuracy metrics for different models in the diffrent datasets 
          by subsetting all Players with more than 30 Games Played and 
-         selecting their first 25, and forecasting their next 5 with arima models 
-10. 7.3TimeseriesModelling gives you an idea of which are the models arima models chosen for different players 
-	each one taking into account how many matches he has played (put in ranges)
+         selecting their first 5, and forecasting their next 1 with arima models 
+
+	All results are stored manually in C:\Users\Carles\Desktop\MasterThesis\ResultsPhotos
+	In each R play results are stored in list to know what to save manually
