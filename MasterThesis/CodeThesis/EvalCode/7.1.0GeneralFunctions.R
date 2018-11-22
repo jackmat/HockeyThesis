@@ -19,7 +19,7 @@ theme_set(theme_bw())  # pre-set the bw theme.
 
 
 #### Global variables
-Boolean <- TRUE #Changing to TRUE if wanting to work with non-zero Data (reccommended)
+Boolean <- FALSE #Changing to TRUE if wanting to work with non-zero Data (reccommended)
 NameVar <-""
 NTOP<- 944
 Season<-2007
@@ -89,10 +89,20 @@ MyQuantileApplication<-function(Data, DatVar, probs = c(0.05, 0.25, 0.5, 0.75,0.
     myTime_melted<-myTime_melted[ !myTime_melted$value==0,]
     }
   #Adding Variable to know which measure they are
-  Valmelted<-cbind(myData_melted, Dat="Val")
-  Valtimemelted<-cbind(myTime_melted, Dat="Val/h")
-  PMValmelted<-cbind(myPlusMinus_melted, Dat="+/- Val")
-  PlusMinusTimemelted<-cbind(PlusMinusTime_melted, Dat="+/- Val/h")
+  Valmelted<-cbind(myData_melted, Dat="Direct")
+  Valtimemelted<-cbind(myTime_melted, Dat="Directh")
+  PMValmelted<-cbind(myPlusMinus_melted, Dat="Collective")
+  PlusMinusTimemelted<-cbind(PlusMinusTime_melted, Dat="Collectiveh")
   # Putting them all together in Datasetdiff0
   Datasetdiff0<- rbind(Valmelted, Valtimemelted,PMValmelted,PlusMinusTimemelted) 
-
+  colnames(Datasetdiff0)[2]<- "PlayerId"
+  mysamplecols<-sample( colnames(CDataset)[2:length(colnames(CDataset))], 5 ,replace = F) # Select 10 cols
+  head(Datasetdiff0)
+  ggplot(Datasetdiff0 %>% filter(PlayerId %in% mysamplecols))+ 
+    facet_grid(Dat~., scales =  "free") +
+    geom_line(aes(x = CountGame, y = value, color = PlayerId))+
+    labs(x = "Game nº for the regular Season",
+         y = "Valuation")
+    
+  
+  

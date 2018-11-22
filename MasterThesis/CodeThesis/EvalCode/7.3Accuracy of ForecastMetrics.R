@@ -66,10 +66,12 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
     series <-list()
     index <-  c()
     counter<-0 
+    
+    
     for(d in 1:length(TotList)){
       DatasetList<- TotList[[d]]
       Positions<-unique(GeneralTableList[[d]]$Position)
-
+      
       Dataset<- DatasetList[[Dataindex]]
       IdFiltering<-GeneralTableList[[d]] %>% filter(Position %in% c("RW","LW","C", "D")) %>% select(id) %>% apply(1,as.character)
       Dataset<-Dataset[,c("CountGame",IdFiltering)]
@@ -79,10 +81,12 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
         ### The steps are:
         #(1) Selecting the matches Played by that player 
         #    (if time played is 0 in the timeDataset, then that player has not played a match)
+        
         myData<-Dataset[,z]
         mytime<- DatasetList[[5]][,z]
         MyTrueData<- myData[-which(mytime==0)]
         TimseSeriesData[[z-1]]<- MyTrueData
+        
       }
     
       lengthlst<-lapply(TimseSeriesData, length)
@@ -197,6 +201,7 @@ ErrorsForDatasets<-AccuracyEvaluationData(lengthseries=lengthseries,
 TrainErrorsforDatasets<-  ErrorsForDatasets$trainError
 TestErrorsforDatasets<-  ErrorsForDatasets$testError
 
+
 df2_melted<-melt(TrainErrorsforDatasets,id.vars = "DataframeName")
 TrainModelEvaluation<-TrainErrorsforDatasets%>%
   ddply(.(DataframeName), summarize, 
@@ -209,7 +214,7 @@ TestModelEvaluation<-TestErrorsforDatasets%>%
         MeanME = mean(ME, na.rm =T),  SdME = sd(ME, na.rm =T),
         #MeanRMSE = mean(RMSE, na.rm =T),  SdRMSE = sd(RMSE, na.rm =T),
         MeanMAE = mean(MAE, na.rm =T),  SdMAE = sd(MAE, na.rm =T))
-colnames(TestModelEvaluation)[1]<- "Arima Model"
+colnames(TestModelEvaluation)<- c("Arima Model", "ME", "sdME", "MAE", "sdMAE")
 # Plotting  metrics distribution for data1 and two
 
   
@@ -291,7 +296,7 @@ TestHistComparison3<-ggplot(df2_meltedTest%>%filter(variable %in% c("ME", "MAE")
        #caption = "Source: Carles Illustration"
   )
 
-TestHistComparison4<-ggplot(df2_meltedTest%>%filter(variable %in% c("ME", "MAE"))%>%
+TestHistComparison4<-ggplot(df2_meltedTest%>%filter(variable %in% c("ME","RMSE", "MAE"))%>%
                               filter(DataframeName %in% paste0(OrderModels," ", "Collectiveh")))+
   facet_grid(DataframeName~variable, drop = T, scales = "free")+
   geom_histogram(aes(x=value, y=(..count..)/tapply(..count..,..PANEL..,sum)[..PANEL..]))+

@@ -150,6 +150,6 @@ listPlots[[2]]<- ComphistPosition
 # }
 
 listTables<- list()
-listTables[[1]]<- MostTypicalModelperRange%>% arrange(Range)
+listTables[[1]]<- MostTypicalModelperRange
 listTables[[2]]<- BiggerModelsPerRange
 
