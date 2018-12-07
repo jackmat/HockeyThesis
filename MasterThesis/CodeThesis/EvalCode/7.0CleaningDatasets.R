@@ -96,6 +96,7 @@ Choosedif0<-function(x){
   col1<- as.numeric(x[1])
   col2<- as.numeric(x[2])
   if(length(x)==3){
+  
     col3 <- as.numeric(x[3])
   }
   else{col3<- rep(0, length(col1))}

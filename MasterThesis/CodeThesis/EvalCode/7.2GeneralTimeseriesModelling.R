@@ -112,9 +112,9 @@ FilepathSrotingPlots<- "C:/Users/Carles/Desktop/MasterThesis/ResultsPhotos/"
 
 
 
-Positionfilt<-c( "F")
 
-ComphistPosition<- ggplot(TotMatFilt%>%filter(Position != Positionfilt), aes (x =ArimaModel))+
+
+ComphistPosition<- ggplot(TotMatFilt, aes (x =ArimaModel))+
   facet_grid(Position~Dataset)+
   geom_histogram(stat="count")+ 
   theme_bw()+
@@ -122,7 +122,7 @@ ComphistPosition<- ggplot(TotMatFilt%>%filter(Position != Positionfilt), aes (x 
        #subtitle="ARIMA models for nº of Games Played for each Player",
        x = "Best choice of Arima(p,d,q)",
        y = "Count for models suggested")
-ComphistRange<- ggplot(TotMatFilt%>%filter(Position != Positionfilt), aes (x =ArimaModel))+
+ComphistRange<- ggplot(TotMatFilt, aes (x =ArimaModel))+
   facet_grid(Range~Dataset)+
   geom_histogram(stat="count")+ 
   theme_bw()+

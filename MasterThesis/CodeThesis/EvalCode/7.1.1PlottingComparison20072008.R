@@ -162,9 +162,9 @@ GeneralQuantileTableT<-data.frame(QuantileTransf[,1:2], 'Direct(% change)'= Quan
                                   QuantileTransf[,7:8], 'Collectiveh (% change'= Quantilediff4)
 colnames(GeneralQuantileTableT)<- c("07-08","08-09", "% change", "07-08","08-09", "% change", "07-08","08-09", "% change", "07-08","08-09","% change") 
 
-QuantileTab<-kable(GeneralQuantileTableT,"latex", booktabs = TRUE, digits = 3) %>%
+QuantileTab<-kable(GeneralQuantileTableT,"html", booktabs = TRUE, digits = 3) %>%
   kable_styling(font_size = 9) %>%
-  add_header_above(c(" " = 1, "Direct" = 3, "Direct/h 1" = 3, "Collective" = 3, "Collective/h" = 3))%>%
+  add_header_above(c(" " = 1, "Direct" = 3, "Direct/h " = 3, "Collective" = 3, "Collective/h" = 3))%>%
   column_spec(c(4,7,10,13), bold = T, italic = T) 
 
       
@@ -195,14 +195,6 @@ boxplot1 <-ggplot(quantiledata, aes(x ="", y=value))+
   )+
   geom_boxplot(outlier.size = 0.1, outlier.color = "red")
 boxplot1
-scatterplot2<-ggplot(quantiledata, aes(x= counter, y = value))+ 
-  facet_grid(.~Dat)+
-  labs(#subtitle="Quantile analysis of player's performances for each match", 
-       y="Valuation", 
-       x="Nº of regular season Match"#, 
-       #title= paste0("Quantile Player's performance per match in ", Season,"-",Season+1)#, 
-       #caption = "Source: Carles Illustration"
-  )+    geom_line(aes(color = variable))   # add quantile values at x=0.5
 
 mydb <- dbConnect(MySQL(), 
                   user='root', 
@@ -249,7 +241,7 @@ if(SalariesCalc ==FALSE){
   Salaries2008<-main(2009)}
 listSalaries<- list(Salaries2007, Salaries2008)
 for(i in 1:length(c(2007,2008))){
- print(i)
+print(i)
   # change to 1 or 2 for 2007 or 2008  
 GeneralTable<-data.frame(id =colnames(mylistDatasets[[i]]$Direct)[2:length(mylistDatasets[[i]]$Direct)])%>%
   mutate(Direct = apply(mylistDatasets[[i]]$Direct[,2:ncol(mylistDatasets[[i]]$Direct)],2,sum))%>%
@@ -316,7 +308,11 @@ GeneralTable<-GeneralTable%>%left_join(CompareGP[[i]][c('PlayerId','PlayerName',
   left_join(listSalaries[[i]], by = c("PlayerName"= "Player"))%>%
   select(id, PlayerName,P, Age, Salary, GPsec, G,GA, PlusMin,NHL, Direct,Directh, Collective,Collectiveh)%>%
   filter(GPsec != 0)%>%
-  dplyr::rename(Position = P)%>%
+  dplyr::rename(Position = P)
+  
+  GeneralTable$Position[which(GeneralTable$Position%in%c("LW","RW", "C"))]<-"F"
+
+  GeneralTable <- GeneralTable %>%
   dplyr::rename(GP = GPsec)%>%
   dplyr::rename(Points = NHL)%>%
   mutate(GPDirect = Direct/GP)%>%
@@ -424,4 +420,4 @@ namslist<-c("boxplot", "histogram",
             "PositionSalaryRegression","SalaryPositionRegressionGP")
 
 
-DataSet2007[[1]], "Direct")
+

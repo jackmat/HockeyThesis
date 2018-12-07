@@ -52,10 +52,10 @@ DataClean<- function(Data, onlyGP="Yes"){
   colnames(matrixmean)<- c("Valuation", "Position", "SalaryRange","indexSalary" ,"Metric")
   matrixmean$Valuation<- as.numeric(as.character(matrixmean$Valuation))
   if(onlyGP == "Yes"){
-    matrixmean<-matrixmean%>% filter(!is.na(Valuation)) %>% filter(Position %in% c("RW", "LW","D","C"))%>%
+    matrixmean<-matrixmean%>% filter(!is.na(Valuation)) %>% filter(Position %in% c("F","D"))%>%
       filter(grepl("GP",Metric))
   }
-  else{matrixmean<-matrixmean%>% filter(!is.na(Valuation)) %>% filter(Position %in% c("RW", "LW","D","C"))%>%
+  else{matrixmean<-matrixmean%>% filter(!is.na(Valuation)) %>% filter(Position %in% c("F","D"))%>%
     filter(!grepl("GP",Metric))}
   return(matrixmean)
 }
@@ -87,7 +87,7 @@ GPQ95<-GPmatrix95%>%cbind(measure ="Q95")
 
 
 TotGP<- rbind(GPQ05,GPQ25,MedianGP, MeanGP, GPQ75,GPQ95)
-ggplot(TotGP, 
+TotGPscatterplot<-ggplot(TotGP, 
        aes(x =  as.factor(indexSalary), y = Valuation, group = measure, color = measure))+
   facet_grid(Metric~Position, scales = "free")+
   geom_line(aes(color = measure))+
@@ -104,8 +104,11 @@ TQ25<-Tmatrix25%>%cbind(measure ="Q25")
 TQ75<-Tmatrix75%>%cbind(measure ="Q75")
 TQ95<-Tmatrix95%>%cbind(measure ="Q95")
 TotT<- rbind( TQ05,TQ25,TMedian, TMean,TQ75,TQ95)
-ggplot(TotT%>% filter(Metric %in% c("Collective","Collectiveh","Direct","Directh", "PlusMinus","Points")), 
+Totscatterplot<-ggplot(TotT%>% filter(Metric %in% c("Collective","Collectiveh","Direct","Directh", "PlusMinus","Points")), 
        aes(x =  as.factor(indexSalary), y = Valuation, group = measure, color = measure))+
   facet_grid(Metric~Position, scales = "free")+
   geom_line(aes(color = measure))+
   labs(x = "Salary ranges")
+
+graphLists<- list(TotGPscatterplot,Totscatterplot)
+namevec<- c("TotGPscatterplot", "Totscatterplot")

@@ -55,6 +55,17 @@
     arrange(desc(Collectiveh))  %>% 
     head(10)
 
+  
+  DatnoGoalie08<-Data2008 %>% filter(Position!= "G")
+  CollectiveImpact08NOGoalie<-DatnoGoalie08[,1:13]%>% 
+    arrange(desc(Collective))  %>% 
+    head(10)
+  DatnoGoalie07<-Data2007 %>% filter(Position!= "G")
+  
+  CollectiveImpact07NOGoalie<-DatnoGoalie07[,1:13]%>% 
+    arrange(desc(Collective))  %>% 
+    head(10)
+  
   # GPDirectImpact08<-Data2008[,c(1:9,14:17)]%>% 
   #   arrange(desc(GPDirect))  %>% 
   #   head(10)
@@ -78,6 +89,8 @@ CompDirect<-rbind(DirectImpact07, DirectImpact08)
 CompDirecth<-rbind(DirectImpactTime07, DirectImpactTime08)
 CompCollective<-rbind(CollectiveImpact07,CollectiveImpact08)
 CompCollectiveh<-rbind(CollectiveImpactTime07,CollectiveImpactTime08)
+CompCollectiveNoGoalie<- rbind(CollectiveImpact07NOGoalie, CollectiveImpact08NOGoalie)
+
 Top10Table0708<- function(Data, blackcol,  type = "latex"){
   CompDirect0708<- data.frame(TopPlayers = rep(1:10,2),Data)
   kable(Data,type, booktabs = TRUE) %>%
@@ -91,5 +104,5 @@ Top10Table0708(CompDirecth, blackcol = 11, "html")
 Top10Table0708(CompCollective, blackcol = 12)
 Top10Table0708(CompCollectiveh, blackcol = 13, "html")
 
-
+Top10Table0708(CompCollectiveNoGoalie, blackcol = 12)
 
