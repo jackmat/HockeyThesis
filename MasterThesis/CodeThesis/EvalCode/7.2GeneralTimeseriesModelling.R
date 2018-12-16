@@ -56,7 +56,7 @@ for(d in 1:length(TotList)){
           #MydiffData<-diff(MyTrueData)
           #(3) If length of the time series is more than 5 matches:
           #(3.1.1) If stationary, do modelling
-          fit<-auto.arima(MyTrueData)
+          fit<-auto.arima(MyTrueData, ic = c("aicc", "aic", "bic"), stepwise=FALSE, approximation=FALSE)
           res[i]<-paste0(arimaorder(fit),collapse = ",")  }
       }
           Mat<-data.frame(ArimaModel=res[2:length(res)], 

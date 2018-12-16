@@ -46,7 +46,8 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
                                   GeneralNames = GeneralNames, 
                                   TotList= TotList,
                                   orderModels = OrderModels,
-                                  n){
+                                  n=76, 
+                                  remove0 = FALSE){
   ######### It makes a forecast for for Players with more than lengthseries views, 
   #        and taking the first lengthseries observations        
   #        with holdout = houldout, and gives out several metrics accuracy
@@ -56,7 +57,6 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
   #     holdout: integer number values to predict
   #     GeneralNames: vector of names to pass as definition of what is the metric of the Dataset about
   #     DatasetList: List of data.frames with same colnames and rownames and dimensions
-  
   MyMat<-data.frame()
 
   for(Dataindex in 1:(length(TotList[[1]])-1)){
@@ -103,9 +103,20 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
             
           }
           else{
+            if(remove0==TRUE){
+              if(TimseSeriesData[[i]][(positionIndex+lengthseries-1)]==0){
+              }
+              else{
+                counter<-counter+1
+                series[[counter]]<- ts(TimseSeriesData[[i]][positionIndex:(positionIndex+lengthseries-1)])
+                index[counter]<- i # For the general number
+              }
+            }
+            else{
             counter<-counter+1
             series[[counter]]<- ts(TimseSeriesData[[i]][positionIndex:(positionIndex+lengthseries-1)])
             index[counter]<- i # For the general number
+            }
           }
         }
       }
@@ -118,6 +129,7 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
     
     ##### Here changing lapply for sapply and getting a list dataframe forecast
     for( ARIMAindex in 1:length(OrderModels)){
+      print(OrderModels[ARIMAindex])
       if(OrderModels[ARIMAindex]=="best"){
         forecasts <- lapply(series,function(foo) {
           subseries <- ts(head(foo,length(foo)-holdout),start=start(foo),frequency=frequency(foo))
@@ -126,11 +138,20 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
       else{
       forecasts <- lapply(series,function(foo) {
         subseries <- ts(head(foo,length(foo)-holdout),start=start(foo),frequency=frequency(foo))
-        forecast(Arima(subseries, 
+        ## Doesnot converge with ML, do CSS
+        t <- try(Arima(subseries, 
                        order = as.numeric(unlist(strsplit(OrderModels[ARIMAindex], ","))), 
                        include.mean = TRUE,
-                       method="ML"),h=holdout)
-      } )
+                       method="ML" ))
+        if("try-error" %in% class(t)){print("Error solved by using CSS optimization")
+                        t<- Arima(subseries, 
+                         order = as.numeric(unlist(strsplit(OrderModels[ARIMAindex], ","))), 
+                         include.mean = TRUE,
+                         method="CSS" )
+          }
+        return(forecast(t,h=holdout))
+         
+      })
       ######## To do this, checking data eval
       
       } 
@@ -178,11 +199,15 @@ ErrorsForDatasets<-AccuracyEvaluationData(lengthseries=lengthseries,
                                           GeneralNames = GeneralNames, 
                                           TotList = TotList, 
                                           orderModels = OrderModels,
-                                          n = 76)
+                                          n = 76, 
+                                          remove0 = F) 
+# Change to true if wanted for eliminating 0 values on the prediction
 
 
-ErrorsForDatasets
+
+Dat<-ErrorsForDatasets %>%
+  select(Model, ME, RMSE, MAE, Dataframe)
+
+kable(Dat,"latex", booktabs = TRUE, digits= 3)
 
 
-
-kable(ErrorsForDatasets%>%select(Model, ME, RMSE, MAE, Dataframe),"html", booktabs = TRUE, digits= 3)
