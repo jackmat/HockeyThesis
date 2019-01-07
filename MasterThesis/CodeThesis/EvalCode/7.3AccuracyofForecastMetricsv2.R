@@ -56,7 +56,9 @@ AccuracyEvaluationData<- function(lengthseries=lengthseries,
   #     lengthseries: integer number that decides how long will be the serie to analyze
   #     holdout: integer number values to predict
   #     GeneralNames: vector of names to pass as definition of what is the metric of the Dataset about
-  #     DatasetList: List of data.frames with same colnames and rownames and dimensions
+  #     TotList: List of data.frames with same colnames and rownames and dimensions, accounting for years
+  #     n: it checks from indx 1 to n how many possible time series of lengthseries observations can take from a specific time series
+  #     remove0: If true, it will remove from forecasting all series where the real value for the forecast is 0.
   MyMat<-data.frame()
 
   for(Dataindex in 1:(length(TotList[[1]])-1)){
