@@ -1,0 +1,157 @@
+---
+title: "1.EvaluationPlayerValues2007"
+author: "Carles Sans Fuentes"
+date: "17 de septiembre de 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE, fig.width = 7, fig.asp = 0.8, fig.show = "asis", fig.align = "center", fig.pos = "htbp",tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+## Evaluation of the Ice Hockey regular season for year 2007 (82 matches per team). 
+
+The data evaluated in this document is the valuation of NHL Players during the regular season of 2007. 
+
+```{r, echo= T}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+library(tidyr)
+library(tidyverse) 
+
+path = "C:/Users/Carles/Desktop/MasterThesis/CodeThesis/"
+Season <- 2007
+RegularMatches <- 82
+PlayerValMatrix <- read.csv(paste0(path,Season, "PlayerValMatrix.csv"),
+                            sep = ",", dec = ".", header = TRUE)
+```
+
+## Pretreatment of Data
+
+Before starting to evaluate Data, several variables are eliminated from the first Dataset. Those are general GameIds of matches and repeated counters of games. 
+
+After this, a join of players evaluation appearing in different teams has been performed in order to continue understanding the evaluation of that player through that season. Directly below one can see the functions used to clean the dataset
+
+```{r, echo=True}
+JoinRepeatedPlayers<- function(Data){
+  
+  # Getting the subset of only Players wit more than one column appear
+  # This is due to the facvt that the might have played in more than one team
+  columnNames<- colnames(Data)
+  UniquePlayers<-substr(columnNames, 1,8) 
+  Mytab<-as.data.frame(table(UniquePlayers))
+  RepeatedPlayers<- filter(Mytab, Freq>1)
+  
+  #Creating a Data.frame to store results
+  Res<- matrix(nrow=RegularMatches,
+               ncol= length(RepeatedPlayers$UniquePlayers))
+  Res<- as.data.frame(Res)
+  colnames(Res) <-as.character(RepeatedPlayers$UniquePlayers)
+
+  for(i in 1:nrow(RepeatedPlayers)){
+    Smallframe <-select(Data, 
+                        contains(as.character(RepeatedPlayers[i,1])))
+    Res[,i]<-apply(Smallframe, 1, Choosedif0)
+    if(class(Res[,i])!="numeric"){
+       print(paste0(RepeatedPlayers[i,1], " in iteration ",i))
+    }
+  }  
+  eliminateRep<- as.character(RepeatedPlayers$UniquePlayers)
+  RemoveRep <- select(Data, -contains("_")) %>% select(-one_of(eliminateRep))
+  ## The warning is OK
+  EndData<-cbind(RemoveRep, Res)
+  colnames(EndData)[2:length(colnames(EndData))]<- 
+   substr(colnames(EndData)[2:length(colnames(EndData))],2,8)
+  
+  
+  return(EndData)  
+}
+
+Choosedif0<-function(x){
+  #### It takes a vector of two numbers and 
+  #### It gives out the one different to 0 if possible
+  col1<- as.numeric(x[1])
+  col2<- as.numeric(x[2])
+  if(length(x)==3){
+    col3 <- as.numeric(x[3])
+  }
+  else{col3<- rep(0, length(col1))}
+  if(col1==0 & col2==0 & col3==0){return(as.numeric(0))}
+  else if(col1!=0 & col2==0 & col3 == 0){return(col1)}
+  else if(col2!=0 & col1==0 & col3 == 0){return(col2)}
+  else if(col1==0 & col2==0 & col3 != 0){return(col3)}
+  
+  else{return(max(c(col1,col2, col3)))}
+}
+
+
+JoinPlayersValuesIntoOneCol<- function(myData){
+  n<-length(colnames(myData))                
+  Datas <- myData[,2:n] # dropoutCols<- c("X")
+  print(dim(Datas))
+  FilteredFrame<- Datas %>%
+    filter(CountGame < RegularMatches) %>% 
+    select(-contains("GameId"))
+  print(dim(FilteredFrame))
+  FilteredFrame[is.na(FilteredFrame)] <- 0
+  Dataset<- JoinRepeatedPlayers(Data = FilteredFrame)
+  return(Dataset)
+}
+
+```
+
+
+Other functions are also used for the analysis of the Data posteriorly, such as:
+
+```{r, echo=T}
+options(scipen=999)  # turn-off scientific notation like 1e+48 NOT SURE WHAT IT DOES
+theme_set(theme_bw())  # pre-set the bw theme.
+
+
+PlotFunc<- function(Data, x, y, color){
+  myData_melted <- melt(Data, id.vars = 'CountGame')
+  MeanData<-apply(Dataset, 1, mean)
+  ggplot(myData_melted, aes(x = CountGame, y = value)) + 
+    geom_line(aes(color = variable #, group = cat
+    ),show.legend = F) +
+    labs(subtitle="Valuation", 
+         y="Valuation by Player", 
+         x="Matches played by each player", 
+         title="Player's valuation on season 2007"#, 
+         #caption = "Source: Carles Illustration"
+          )+ 
+    stat_summary(aes(y = value,group=1), fun.y=mean, colour="red", geom="line",group=1)
+  
+}
+
+
+TopCols <- function(Data=Dataset, topn=3){
+  ### It extracts top n players by higher valuation
+  mylen<-apply(Data[,2:length(Data)],2, sum)
+  lst <- sort(mylen, index.return=TRUE, decreasing=TRUE)
+  Topn<-lapply(lst, `[`, lst$x %in% head(unique(lst$x),topn))
+  return(names(Topn$x))
+  }
+
+```
+In order to clean the Dataset and having it properly and nice, the following has been command is called
+```{r , echo=TRUE}
+RegularMatches <- 82
+Dataset<-JoinPlayersValuesIntoOneCol(myData = PlayerValMatrix) # WARNING IS OKAY
+```
+
+## View of the Data
+
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
