@@ -217,9 +217,16 @@ for(i in 1:length(mylistDatasets)){
   SeasonVar<- SeasonCompletename(Season = Seasons[i])
   
   ################### Checking that time played in different matches and GP from Stats are the same
-  
-  GPquery = paste0("SELECT player.PlayerName, i.PlayerId, sum(i.GP) AS GP from player, (SELECT  DISTINCT team, PlayerId ,GP FROM `player_career_stats` WHERE Season = '",SeasonVar,"' AND SeasonType = 'Regular Season')i  WHERE i.PlayerId = player.PlayerId GROUP by PlayerId")
-  GPPlayer<- QueryMySQL(mydb= mydb, GPquery)
+#1
+  # GPquery = paste0("SELECT player.PlayerName, i.PlayerId, sum(i.GP) AS GP from player,
+  #                  (SELECT  DISTINCT team, PlayerId ,GP FROM `player_career_stats`
+  #                  WHERE Season = '",SeasonVar,"' AND SeasonType = 'Regular Season')i
+  #                  WHERE i.PlayerId = player.PlayerId GROUP by PlayerId")
+  # GPPlayer<- QueryMySQL(mydb= mydb, GPquery)
+#2 Change for Patric
+  GPPlayer<- read.csv(paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/PlayerIdMatchTable",SeasonVar,".csv"))
+  colnames(GPPlayer)<-c("PlayerName","PlayerId","GP")
+#End of Change for Patrick  
   GPPlayers<-GPPlayer[!duplicated(GPPlayer),] #removing duplicated rows
   dim(GPPlayer)== dim(GPPlayers)
   SecTableGP<-colSums(mylistDatasets[[i]]$TimeSet[,2:ncol(mylistDatasets[[i]]$TimeSet)] != 0)
