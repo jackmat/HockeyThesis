@@ -208,33 +208,45 @@ mylistDatasets<- list(DataSet2007, DataSet2008)
 CompareGP<-list()
 Seasons<- c(2007, 2008)
 for(i in 1:length(mylistDatasets)){
-  
-  TopPlayers<-TopCols(mylistDatasets[[i]]$Direct, NTOP)
-  TopDataset <- subset(mylistDatasets[[i]]$Direct, select = c("CountGame",TopPlayers))
-  PlayerId <- TopPlayers
-  query = paste0("SELECT PlayerName FROM `player` WHERE PlayerId IN (", paste(PlayerId,collapse=","),")")
-  topNAMES <- QueryMySQL(mydb= mydb, query = query)
   SeasonVar<- SeasonCompletename(Season = Seasons[i])
-  
   ################### Checking that time played in different matches and GP from Stats are the same
-#1
-  # GPquery = paste0("SELECT player.PlayerName, i.PlayerId, sum(i.GP) AS GP from player,
-  #                  (SELECT  DISTINCT team, PlayerId ,GP FROM `player_career_stats`
-  #                  WHERE Season = '",SeasonVar,"' AND SeasonType = 'Regular Season')i
-  #                  WHERE i.PlayerId = player.PlayerId GROUP by PlayerId")
-  # GPPlayer<- QueryMySQL(mydb= mydb, GPquery)
-#2 Change for Patric
-  GPPlayer<- read.csv(paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/PlayerIdMatchTable",SeasonVar,".csv"))
-  colnames(GPPlayer)<-c("PlayerName","PlayerId","GP")
-#End of Change for Patrick  
-  GPPlayers<-GPPlayer[!duplicated(GPPlayer),] #removing duplicated rows
-  dim(GPPlayer)== dim(GPPlayers)
-  SecTableGP<-colSums(mylistDatasets[[i]]$TimeSet[,2:ncol(mylistDatasets[[i]]$TimeSet)] != 0)
-  mynames<-as.numeric(as.character(names(SecTableGP)))
-  SecTableGP<-data.frame(PlayerId=mynames,
-                         GPsec=unlist(SecTableGP,use.names = F))
+  #1
+# 
+# TopPlayers<-TopCols(mylistDatasets[[i]]$Direct, NTOP)
+# TopDataset <- subset(mylistDatasets[[i]]$Direct, select = c("CountGame",TopPlayers))
+# PlayerId <- TopPlayers
+# query = paste0("SELECT PlayerName FROM `player` WHERE PlayerId IN (", paste(PlayerId,collapse=","),")")
+# topNAMES <- QueryMySQL(mydb= mydb, query = query)
+# 
+# GPquery = paste0("SELECT player.PlayerName, i.PlayerId, sum(i.GP) AS GP from player,
+#                  (SELECT  DISTINCT team, PlayerId ,GP FROM `player_career_stats`
+#                  WHERE Season = '",SeasonVar,"' AND SeasonType = 'Regular Season')i
+#                  WHERE i.PlayerId = player.PlayerId GROUP by PlayerId")
+# GPPlayer<- QueryMySQL(mydb= mydb, GPquery)
+# GPPlayers<-GPPlayer[!duplicated(GPPlayer),] #removing duplicated rows
+# dim(GPPlayer)== dim(GPPlayers)
+# SecTableGP<-colSums(mylistDatasets[[i]]$TimeSet[,2:ncol(mylistDatasets[[i]]$TimeSet)] != 0)
+# mynames<-as.numeric(as.character(names(SecTableGP)))
+# SecTableGP<-data.frame(PlayerId=mynames,
+#                        GPsec=unlist(SecTableGP,use.names = F))
+# THEJOIN<-left_join(SecTableGP, GPPlayers, by = "PlayerId")
+# write.csv(THEJOIN, paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/PlayerIdMatchTable",SeasonVar,".csv"))
+# CompareGP[[i]]<-THEJOIN
+  #2 Change for Patrick
+  sReadLines <- function(fnam) {
+    f <- file(fnam, "rb")
+    res <- readLines(f)
+    close(f)
+    res
+  }
+  THEJOIN<- read.csv(text = sReadLines(paste0("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/PlayerIdMatchTable",SeasonVar,".csv")),
+                     stringsAsFactors = FALSE)
+  CompareGP[[i]]<-THEJOIN[,2:ncol(THEJOIN)]
+  colnames(THEJOIN)
+
+  # End of Change for Patrick
+
   
-  CompareGP[[i]]<-left_join(SecTableGP, GPPlayers, by = "PlayerId")
 }
 ## Warning In. local(con, statement)... Decimal MySQL is GOOD
 
@@ -244,8 +256,12 @@ source(totPath)
 GeneralTableList<-list()
 if(SalariesCalc ==FALSE){
   SalariesCalc <- TRUE
-  Salaries2007<-main(2008) # stands for paste0((year-1),'-', year) 
-  Salaries2008<-main(2009)}
+  # Salaries2007<-main(2008) # stands for paste0((year-1),'-', year) 
+  # Salaries2008<-main(2009)
+  Salaries2007<-read.csv("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/CleanDatasets/SalariesDropYourGloves2007.csv", sep = ";", stringsAsFactors = F) # stands for paste0((year-1),'-', year) 
+  Salaries2008<-read.csv("C:/Users/Carles/Desktop/MasterThesis/CodeThesis/CleanDatasets/SalariesDropYourGloves2008.csv",sep = ";",stringsAsFactors = F)
+  
+}
 listSalaries<- list(Salaries2007, Salaries2008)
 for(i in 1:length(c(2007,2008))){
 print(i)
@@ -256,7 +272,7 @@ GeneralTable<-data.frame(id =colnames(mylistDatasets[[i]]$Direct)[2:length(mylis
   mutate(Collective = apply(mylistDatasets[[i]]$Collective[,2:ncol(mylistDatasets[[i]]$Collective)],2,sum))%>%
   mutate(Collectiveh = apply(mylistDatasets[[i]]$Collectiveh[,2:ncol(mylistDatasets[[i]]$Collectiveh)],2,sum))
 GeneralTable$id<- as.numeric(as.character(GeneralTable$id))
-
+head(GeneralTable)
 GeneralTable<-GeneralTable%>%left_join(CompareGP[[i]][c('PlayerId','PlayerName', 'GP','GPsec')], 
                                              by = c("id"= "PlayerId"))%>% 
   mutate(PlayerName = replace(PlayerName, PlayerName=='Alexander Edler', 'Alex Edler')) %>%
@@ -340,22 +356,24 @@ GeneralTableList1<-cbind(GeneralTableList[[1]], Year = "07-08")
 GeneralTableList2<-cbind(GeneralTableList[[2]], Year = "08-09")
 TotalDataFrame<- rbind(GeneralTableList1, GeneralTableList2)
 tableresData <- melt(TotalDataFrame, id.vars = colnames(TotalDataFrame)[c(1:8, length(colnames(TotalDataFrame)))])
+class(tableresData$Salary)
+tableresData$Salary<-gsub(",", ".", tableresData$Salary)
+tableresData$Salary<- as.numeric(tableresData$Salary)
 
-
-Plottingdiffmeasures<-function(Data){
-  ggplot(Data, aes(x = Salary, y = value)) + 
-    facet_grid(Year~., scales = "free")+ 
-    geom_point(aes(color = variable , group = Position
-    ),show.legend = TRUE) +
-    labs(subtitle="Metrics comparison", 
-         y="Valuation by Player", 
-         x="Salary (in Million of dollars)", 
-         title=paste0("Player's valuation ")#, 
-         #caption = "Source: Carles Illustration"
-    )
-}
-scatterplot4<- Plottingdiffmeasures(tableresData%>% filter(grepl("GP",variable)))
-scatterplot5<- Plottingdiffmeasures(tableresData%>% filter(!grepl("GP",variable)))
+# Plottingdiffmeasures<-function(Data){
+#   ggplot(Data, aes(x = Salary, y = value)) + 
+#     facet_grid(Year~., scales = "free")+ 
+#     geom_point(aes(color = variable , group = Position
+#     ),show.legend = TRUE) +
+#     labs(subtitle="Metrics comparison", 
+#          y="Valuation by Player", 
+#          x="Salary (in Million of dollars)", 
+#          title=paste0("Player's valuation ")#, 
+#          #caption = "Source: Carles Illustration"
+#     )
+# }
+# scatterplot4<- Plottingdiffmeasures(tableresData%>% filter(grepl("GP",variable)))
+# scatterplot5<- Plottingdiffmeasures(tableresData%>% filter(!grepl("GP",variable)))
 ind<-c(8:19)
 normtableres<-data.frame(cbind(Salary =TotalDataFrame$Salary, Position=TotalDataFrame$Position, apply(TotalDataFrame[,ind],2,scale)),Year = TotalDataFrame$Year)
 norm_tableresData <- reshape2::melt(normtableres, id.vars = c("Salary", "Position", "Year"))
@@ -363,40 +381,40 @@ norm_tableresData$Salary<- as.numeric(as.character(norm_tableresData$Salary))
 norm_tableresData$Position<- as.character(norm_tableresData$Position)
 norm_tableresData$value<- as.numeric(norm_tableresData$value)
 
-scatterplot6<- Plottingdiffmeasures(norm_tableresData%>% filter(grepl("GP",variable)))
-scatterplot7<- Plottingdiffmeasures(norm_tableresData%>% filter(!grepl("GP",variable)))
-
-
-scatterplot891011<-function(Data, scaled ="Scaled", type = "by Games Played"){
-  p<-ggplot2::ggplot(Data)+
-    facet_grid(variable~Year, scales = "free")+        
-    geom_point(aes(x =Salary, y = value, color = Position))+
-    theme_bw()+
-    labs(subtitle=paste0(scaled," ",type  ,"Regression of Metrics Valuation~Salary"), 
-         y="Valuation", 
-         x="Salary (in $M)", 
-         title= paste0("Metrics regression")#, 
-         #caption = "Source: Carles Illustration"
-    )
-  
-  return(p)
-}
-
-
-scatterplot8 <- scatterplot891011(tableresData%>% filter(grepl("GP",variable)),
-                                              type = "by Games Played",
-                                  scaled = ""  )
-scatterplot9 <- scatterplot891011(tableresData%>% filter(!grepl("GP",variable)),
-                                  type = "by Season",
-                                  scaled = ""  )
-scatterplot10<- scatterplot891011(norm_tableresData%>% filter(grepl("GP",variable)),
-                                  type = "by Games Played",
-                                  scaled = "Scaled" )
-
-scatterplot11<- scatterplot891011(norm_tableresData%>% filter(!grepl("GP",variable)),
-                                  type = "by Season",
-                                  scaled = "Scaled"  )
-
+# scatterplot6<- Plottingdiffmeasures(norm_tableresData%>% filter(grepl("GP",variable)))
+# scatterplot7<- Plottingdiffmeasures(norm_tableresData%>% filter(!grepl("GP",variable)))
+# 
+# 
+# scatterplot891011<-function(Data, scaled ="Scaled", type = "by Games Played"){
+#   p<-ggplot2::ggplot(Data)+
+#     facet_grid(variable~Year, scales = "free")+        
+#     geom_point(aes(x =Salary, y = value, color = Position))+
+#     theme_bw()+
+#     labs(subtitle=paste0(scaled," ",type  ,"Regression of Metrics Valuation~Salary"), 
+#          y="Valuation", 
+#          x="Salary (in $M)", 
+#          title= paste0("Metrics regression")#, 
+#          #caption = "Source: Carles Illustration"
+#     )
+#   
+#   return(p)
+# }
+# 
+# 
+# scatterplot8 <- scatterplot891011(tableresData%>% filter(grepl("GP",variable)),
+#                                               type = "by Games Played",
+#                                   scaled = ""  )
+# scatterplot9 <- scatterplot891011(tableresData%>% filter(!grepl("GP",variable)),
+#                                   type = "by Season",
+#                                   scaled = ""  )
+# scatterplot10<- scatterplot891011(norm_tableresData%>% filter(grepl("GP",variable)),
+#                                   type = "by Games Played",
+#                                   scaled = "Scaled" )
+# 
+# scatterplot11<- scatterplot891011(norm_tableresData%>% filter(!grepl("GP",variable)),
+#                                   type = "by Season",
+#                                   scaled = "Scaled"  )
+# 
 MetricsbyPosition<-function(Data, scaled ="Scaled", type = "by Games Played"){
   p<-ggplot2::ggplot(Data)+
     facet_grid(variable~Position, scales = "free")+        
@@ -412,6 +430,7 @@ MetricsbyPosition<-function(Data, scaled ="Scaled", type = "by Games Played"){
   return(p)
 }
 
+
 byPosition<-MetricsbyPosition(tableresData%>% filter(!grepl("GP",variable)),
 type = "by Season",
 scaled = ""  )
@@ -420,11 +439,32 @@ byPositionGP<-MetricsbyPosition(tableresData%>% filter(grepl("GP",variable)),
                   type = "by Season",
                   scaled = ""  )
 
+
+
+###FOR PATRICK EXTRA
+tableresDataPlusGoals <- melt(TotalDataFrame, id.vars = colnames(TotalDataFrame)[c(1:6,8, length(colnames(TotalDataFrame)))])
+class(tableresDataPlusGoals$Salary)
+tableresDataPlusGoals$Salary<-gsub(",", ".", tableresDataPlusGoals$Salary)
+tableresDataPlusGoals$Salary<- as.numeric(tableresDataPlusGoals$Salary)
+tableresDataPlusGoals$variable<- as.character(tableresDataPlusGoals$variable)
+
+tableresDataPlusGoals$variable[tableresDataPlusGoals$variable=="G"] <- "Goals"
+tableresDataPlusGoals$variable[tableresDataPlusGoals$variable=="Directh"] <- "Direct/h"
+tableresDataPlusGoals$variable[tableresDataPlusGoals$variable=="Collective"] <- "On-ice"
+tableresDataPlusGoals$variable[tableresDataPlusGoals$variable=="Collectiveh"] <- "On-ice/h"
+
+byPositionPat<-MetricsbyPosition(tableresDataPlusGoals%>% filter(!grepl("GP",variable)),
+                              type = "by Season",
+                              scaled = ""  )
+byPositionPatGP<-MetricsbyPosition(tableresDataPlusGoals%>% filter(grepl("GP",variable)),
+                                type = "by Season",
+                                scaled = ""  )
+##END FOR PATRICK
+
 ## The nice results are stored here
-thelist<-list(boxplot1, hist1, scatterplot2, QuantileTab, byPosition, byPositionGP)
+thelist<-list(boxplot1, hist1, scatterplot2, QuantileTab, byPosition, 
+              byPositionGP, byPositionPat, byPositionPatGP)
 namslist<-c("boxplot", "histogram",
             "Quantile", "QuantileTable", 
-            "PositionSalaryRegression","SalaryPositionRegressionGP")
-
-
-
+            "PositionSalaryRegression","SalaryPositionRegressionGP", 
+            "PositionSalaryRegressionPlusGoals", "PositionSalaryRegressionGPPlusGoals")
